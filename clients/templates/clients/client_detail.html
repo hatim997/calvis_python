@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{{ page_title }}</h1>
+    <div>
+         <a href="{% url 'clients:client_edit' client_id=client.id %}" class="btn btn-warning me-2">Edit Client</a>
+         <a href="{% url 'clients:client_delete' client_id=client.id %}" class="btn btn-danger">Delete Client</a>
+    </div>
+</div>
+
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <h2>Client Details</h2>
+        <dl class="row">
+            <dt class="col-sm-4 text-sm-end">Name:</dt>
+            <dd class="col-sm-8">{{ client.name }}</dd>
+
+            {% if client.company_name %}
+            <dt class="col-sm-4 text-sm-end">Company:</dt>
+            <dd class="col-sm-8">{{ client.company_name }}</dd>
+            {% endif %}
+
+            {% if client.contact_person %}
+            <dt class="col-sm-4 text-sm-end">Contact Person:</dt>
+            <dd class="col-sm-8">{{ client.contact_person }}</dd>
+            {% endif %}
+
+            <dt class="col-sm-4 text-sm-end">Email:</dt>
+            <dd class="col-sm-8">{{ client.email }}</dd>
+
+            <dt class="col-sm-4 text-sm-end">Phone:</dt>
+            <dd class="col-sm-8">{{ client.phone }}</dd>
+
+            <dt class="col-sm-4 text-sm-end">Address:</dt>
+            <dd class="col-sm-8">{{ client.address|linebreaksbr|default:"N/A" }}</dd>
+
+            <dt class="col-sm-4 text-sm-end">Client Since:</dt>
+            <dd class="col-sm-8">{{ client.created_at|date:"N j, Y" }}</dd>
+
+            <dt class="col-sm-4 text-sm-end">Last Updated:</dt>
+            <dd class="col-sm-8">{{ client.updated_at|date:"N j, Y" }}</dd>
+        </dl>
+    </div>
+
+    <div class="col-lg-6">
+         <div class="card mb-3">
+            <div class="card-header">Event History</div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;"> {# Limit height and scroll #}
+                {% if event_history %}
+                    <ul class="list-group list-group-flush">
+                        {% for event in event_history %}
+                        <li class="list-group-item list-group-item-action small">
+                            <a href="{% url 'bookings:event_detail' event_id=event.id %}" class="text-decoration-none">
+                                <strong>Ref:</strong> {{ event.reference_number }}
+                                <small class="text-muted float-end">{{ event.start_date|date:"M j, Y" }}</small><br>
+                                {{ event.event_location }} ({{ event.get_status_display }})
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted small">No event history found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+         <div class="card">
+            <div class="card-header">Rental History</div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                {% if rental_history %}
+                     <ul class="list-group list-group-flush">
+                        {% for rental in rental_history %}
+                         <li class="list-group-item list-group-item-action small">
+                             <a href="{% url 'bookings:rental_detail' rental_id=rental.id %}" class="text-decoration-none">
+                                <strong>Ref:</strong> {{ rental.reference_number }}
+                                <small class="text-muted float-end">{{ rental.start_date|date:"M j, Y" }}</small><br>
+                                {{ rental.get_status_display }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted small">No rental history found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div> {# End second column #}
+</div> {# End row #}
+
+
+<div class="mt-4">
+    <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">&laquo; Back to Client List</a>
+</div>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Print Barcode - {{ item.name }}</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        img {
+            max-width: 300px;
+        }
+        @media print {
+            button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <img src="{% static 'images/clavis_logo.png' %}" alt="Clavis Logo" class="logo d-inline-block align-top me-2">
+    <h3>{{ item.name }}</h3>
+    <p>SKU: {{ item.sku }}</p>
+    <img src="data:image/png;base64,{{ barcode_image }}" alt="Barcode">
+    <br>
+    <button onclick="window.print()">🖨️ Print</button>
+</body>
+</html>

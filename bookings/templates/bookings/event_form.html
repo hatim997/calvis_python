@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ page_title }}</h1>
+
+    {% if event %}
+        <form method="post" action="{% url 'bookings:event_edit' event_id=event.id %}" novalidate>
+    {% else %}
+        <form method="post" action="{% url 'bookings:event_add' %}" novalidate>
+    {% endif %}
+    
+        {% csrf_token %}
+
+        {% if event_form.non_field_errors %}
+            <div class="alert alert-danger p-2">
+                {% for error in event_form.non_field_errors %}
+                    <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if item_formset.non_form_errors %}
+            <div class="alert alert-danger p-2">
+                {% for error in item_formset.non_form_errors %}
+                    <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# --- Main Booking Details Card --- #}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Booking Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.client.id_for_label }}" class="form-label">{{ event_form.client.label }}</label>
+                        {{ event_form.client }}
+                        {% if event_form.client.help_text %}<div class="form-text">{{ event_form.client.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.client.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.event_name.id_for_label }}" class="form-label">{{ event_form.event_name.label }}</label>
+                        {{ event_form.event_name }}
+                        {% if event_form.event_name.help_text %}<div class="form-text">{{ event_form.event_name.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.event_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.start_date.id_for_label }}" class="form-label">{{ event_form.start_date.label }}</label>
+                        {{ event_form.start_date }}
+                        {% if event_form.start_date.help_text %}<div class="form-text">{{ event_form.start_date.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.start_date.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.end_date.id_for_label }}" class="form-label">{{ event_form.end_date.label }}</label>
+                        {{ event_form.end_date }}
+                        {% if event_form.end_date.help_text %}<div class="form-text">{{ event_form.end_date.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.end_date.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.event_location.id_for_label }}" class="form-label">{{ event_form.event_location.label }}</label>
+                        {{ event_form.event_location }}
+                        {% if event_form.event_location.help_text %}<div class="form-text">{{ event_form.event_location.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.event_location.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                     <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.status.id_for_label }}" class="form-label">{{ event_form.status.label }}</label>
+                        {{ event_form.status }}
+                        {% if event_form.status.help_text %}<div class="form-text">{{ event_form.status.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.status.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.project_manager_name.id_for_label }}" class="form-label">{{ event_form.project_manager_name.label }}</label>
+                        {{ event_form.project_manager_name }}
+                        {% if event_form.project_manager_name.help_text %}<div class="form-text">{{ event_form.project_manager_name.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.project_manager_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.subcontractor_name.id_for_label }}" class="form-label">{{ event_form.subcontractor_name.label }}</label>
+                        {{ event_form.subcontractor_name }}
+                        {% if event_form.subcontractor_name.help_text %}<div class="form-text">{{ event_form.subcontractor_name.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.subcontractor_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ event_form.notes.id_for_label }}" class="form-label">{{ event_form.notes.label }}</label>
+                    {{ event_form.notes }}
+                    {% if event_form.notes.help_text %}<div class="form-text">{{ event_form.notes.help_text|safe }}</div>{% endif %}
+                    {% for error in event_form.notes.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ event_form.is_logistics_only_service }}
+                        <label class="form-check-label" for="{{ event_form.is_logistics_only_service.id_for_label }}">
+                            {{ event_form.is_logistics_only_service.label }}
+                        </label>
+                        {% if event_form.is_logistics_only_service.help_text %}<div class="form-text">{{ event_form.is_logistics_only_service.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.is_logistics_only_service.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# --- Logistics Specific Fields Card (Conditional) --- #}
+        <div class="card mb-4 shadow-sm" id="logistics-fields-card" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0">Logistics Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="{{ event_form.description_of_goods.id_for_label }}" class="form-label">{{ event_form.description_of_goods.label }}</label>
+                    {{ event_form.description_of_goods }}
+                    {% if event_form.description_of_goods.help_text %}<div class="form-text">{{ event_form.description_of_goods.help_text|safe }}</div>{% endif %}
+                    {% for error in event_form.description_of_goods.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+
+                <h6>Leg 1: Pickup from Client & Delivery to Site</h6>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.pickup_address.id_for_label }}" class="form-label">{{ event_form.pickup_address.label }}</label>
+                        {{ event_form.pickup_address }}
+                        {% if event_form.pickup_address.help_text %}<div class="form-text">{{ event_form.pickup_address.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.pickup_address.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.pickup_contact_details.id_for_label }}" class="form-label">{{ event_form.pickup_contact_details.label }}</label>
+                        {{ event_form.pickup_contact_details }}
+                        {% if event_form.pickup_contact_details.help_text %}<div class="form-text">{{ event_form.pickup_contact_details.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.pickup_contact_details.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.delivery_address_override.id_for_label }}" class="form-label">{{ event_form.delivery_address_override.label }}</label>
+                        {{ event_form.delivery_address_override }}
+                        {% if event_form.delivery_address_override.help_text %}<div class="form-text">{{ event_form.delivery_address_override.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.delivery_address_override.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.delivery_contact_details.id_for_label }}" class="form-label">{{ event_form.delivery_contact_details.label }}</label>
+                        {{ event_form.delivery_contact_details }}
+                        {% if event_form.delivery_contact_details.help_text %}<div class="form-text">{{ event_form.delivery_contact_details.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.delivery_contact_details.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <h6 class="mt-3">Leg 2: Return from Site & Delivery to Client/Warehouse</h6>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.return_pickup_address.id_for_label }}" class="form-label">{{ event_form.return_pickup_address.label }}</label>
+                        {{ event_form.return_pickup_address }}
+                        {% if event_form.return_pickup_address.help_text %}<div class="form-text">{{ event_form.return_pickup_address.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.return_pickup_address.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.return_pickup_contact_details.id_for_label }}" class="form-label">{{ event_form.return_pickup_contact_details.label }}</label>
+                        {{ event_form.return_pickup_contact_details }}
+                        {% if event_form.return_pickup_contact_details.help_text %}<div class="form-text">{{ event_form.return_pickup_contact_details.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.return_pickup_contact_details.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                 <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.return_delivery_address.id_for_label }}" class="form-label">{{ event_form.return_delivery_address.label }}</label>
+                        {{ event_form.return_delivery_address }}
+                        {% if event_form.return_delivery_address.help_text %}<div class="form-text">{{ event_form.return_delivery_address.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.return_delivery_address.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ event_form.return_delivery_contact_details.id_for_label }}" class="form-label">{{ event_form.return_delivery_contact_details.label }}</label>
+                        {{ event_form.return_delivery_contact_details }}
+                        {% if event_form.return_delivery_contact_details.help_text %}<div class="form-text">{{ event_form.return_delivery_contact_details.help_text|safe }}</div>{% endif %}
+                        {% for error in event_form.return_delivery_contact_details.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# --- Book Items Card (Formset) - Conditional --- #}
+        <div class="card" id="items-formset-card">
+            <div class="card-header">
+                <h5 class="mb-0">Book Items from Inventory</h5>
+            </div>
+            <div class="card-body">
+                {{ item_formset.management_form }}
+                <div id="item-formset-container">
+                    <div class="row gx-2 mb-2 d-none d-md-flex fw-bold">
+                        <div class="col-md-7">Item</div>
+                        <div class="col-md-3">Quantity</div>
+                        <div class="col-md-2 text-center">Action</div>
+                    </div>
+                    {% for form in item_formset %}
+                        <div class="item-form-row row gx-2 mb-3 align-items-center {% if form.errors %}border border-danger rounded p-2{% else %}border-bottom pb-2{% endif %}" id="{{ form.prefix }}-row">
+                            {% for hidden in form.hidden_fields %} {{ hidden }} {% endfor %}
+                            <div class="col-md-7 mb-2 mb-md-0">
+                                <label for="{{ form.item.id_for_label }}" class="form-label d-md-none">{{ form.item.label }}</label>
+                                {{ form.item }}
+                                {% if form.item.help_text %}<div class="form-text">{{ form.item.help_text|safe }}</div>{% endif %}
+                                {% for error in form.item.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-3 mb-2 mb-md-0">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label d-md-none">{{ form.quantity.label }}</label>
+                                {{ form.quantity }}
+                                {% for error in form.quantity.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-2 text-center">
+                                {% if form.instance.pk and item_formset.can_delete %}
+                                    <div class="form-check" style="display: none;"> {{ form.DELETE }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% if form.non_field_errors %}
+                                <div class="col-12 text-danger small mt-1">
+                                    {% for error in form.non_field_errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                 <button type="button" class="btn btn-sm btn-outline-success add-row mt-2" id="add-item-button"><i class="bi bi-plus-circle-fill me-1"></i> Add Another Item</button>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                {% if event %}Update{% else %}Create{% endif %} Booking
+            </button>
+            <a href="{% if event %}{% url 'bookings:event_detail' event_id=event.id %}{% else %}{% url 'bookings:event_list' %}{% endif %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+<script src="{% static 'js/jquery.formset.js' %}"></script> 
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const logisticsCheckbox = document.getElementById('{{ event_form.is_logistics_only_service.id_for_label }}');
+    const logisticsFieldsCard = document.getElementById('logistics-fields-card');
+    const itemsFormsetCard = document.getElementById('items-formset-card');
+    const addItemButton = document.getElementById('add-item-button'); // Get the add item button
+
+    function toggleLogisticsFields() {
+        if (logisticsCheckbox.checked) {
+            logisticsFieldsCard.style.display = 'block';
+            itemsFormsetCard.style.display = 'none';
+            if(addItemButton) addItemButton.style.display = 'none'; // Hide "Add Another Item" button
+        } else {
+            logisticsFieldsCard.style.display = 'none';
+            itemsFormsetCard.style.display = 'block';
+            if(addItemButton) addItemButton.style.display = 'inline-block'; // Show "Add Another Item" button
+        }
+    }
+
+    if (logisticsCheckbox) {
+        logisticsCheckbox.addEventListener('change', toggleLogisticsFields);
+        // Initial state on page load
+        toggleLogisticsFields(); 
+    } else {
+        console.error("Logistics checkbox not found. Check ID: {{ event_form.is_logistics_only_service.id_for_label }}");
+        // If the checkbox isn't there (e.g. form not passed correctly), ensure item formset is visible by default
+        itemsFormsetCard.style.display = 'block';
+        if(addItemButton) addItemButton.style.display = 'inline-block'; 
+    }
+    
+    // Initialize formset if not logistics only
+    // This needs to be conditional based on the initial state of the checkbox as well.
+    if (!logisticsCheckbox || !logisticsCheckbox.checked) {
+        if (typeof $ !== 'undefined' && $.fn.formset) {
+            $('#item-formset-container .item-form-row').formset({
+                prefix: '{{ item_formset.prefix }}',
+                addText: '<i class="bi bi-plus-circle-fill me-1"></i> Add Item',
+                deleteText: '<i class="bi bi-trash-fill"></i> Remove',
+                addCssClass: 'btn btn-sm btn-outline-success add-row mt-2 mb-3', // This class is used by the button outside the formset plugin
+                deleteCssClass: 'btn btn-sm btn-outline-danger delete-row ms-2', // Added ms-2 for spacing
+                formCssClass: 'dynamic-item-form',
+                added: function(row) {
+                    console.log('Event item row added:', row);
+                    // You might need to re-initialize any JavaScript widgets on the new row here
+                },
+                removed: function(row) {
+                    console.log('Event item row removed:', row);
+                }
+            });
+        } else {
+            console.error("jQuery or jQuery.formset not loaded. Item formset functionality might be limited.");
+        }
+    }
+    
+    // Handle the external "Add Another Item" button
+    if (addItemButton) {
+        addItemButton.addEventListener('click', function() {
+            if (typeof $ !== 'undefined' && $.fn.formset) {
+                const formsetRows = $('#item-formset-container .item-form-row');
+                if (formsetRows.length > 0) {
+                    // Trigger the formset's add function. 
+                    // The formset plugin usually adds its own "add" button.
+                    // If you have your own button, you might need to simulate a click on the plugin's button
+                    // or call its internal addRow function if accessible.
+                    // For simplicity, if using the plugin's add button, this custom button might be redundant
+                    // or you'd hide the plugin's one and use this to trigger it.
+                    // Let's assume the plugin's 'add-row' class is on its generated button.
+                    // This is a common pattern, but might need adjustment based on the specific plugin.
+                    const pluginAddButton = $(`.add-row[data-formset-prefix="{{ item_formset.prefix }}"]`);
+                    if(pluginAddButton.length > 0) {
+                        pluginAddButton.click();
+                    } else {
+                        // Fallback if plugin's button isn't easily targetable or you want a direct add
+                        // This requires understanding how your specific formset.js adds rows.
+                        // The provided `jquery.formset.js` typically adds a button itself.
+                        // This custom button might be better used to just call that button's click event.
+                        console.warn("Could not find formset plugin's add button to trigger. Ensure your formset plugin is initialized and provides an add mechanism.");
+                    }
+                }
+            }
+        });
+    }
+
+
+    // Initialize Flatpickr for datetime fields
+    flatpickr(".flatpickr-datetime", {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        altInput: true,
+        altFormat: "F j, Y H:i",
+    });
+});
+</script>
+{% endblock %}

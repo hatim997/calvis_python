@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %} {% block title %}{{ page_title|default:"Monthly Summary" }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h1>{{ page_title|default:"Monthly Summary Report" }}</h1>
+        </div>
+        <div class="col-md-4 text-md-end">
+            {% if selected_month_year_str != "Not Selected" %}
+                <div class="btn-group" role="group" aria-label="Download report formats">
+                    <a href="?{{ request.GET.urlencode }}&format=pdf" class="btn btn-outline-danger btn-sm" target="_blank" title="Download as PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+                    <a href="?{{ request.GET.urlencode }}&format=xlsx" class="btn btn-outline-success btn-sm" title="Download as Excel"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+                    <a href="?{{ request.GET.urlencode }}&format=docx" class="btn btn-outline-primary btn-sm" title="Download as Word"><i class="bi bi-file-earmark-word"></i> Word</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card card-body mb-4 shadow-sm filter-form">
+        <form method="get" action="" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="{{ form.year.id_for_label }}" class="form-label">{{ form.year.label }}</label>
+                {{ form.year }}
+                {% if form.year.errors %}<div class="invalid-feedback d-block">{{ form.year.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-4">
+                <label for="{{ form.month.id_for_label }}" class="form-label">{{ form.month.label }}</label>
+                {{ form.month }}
+                {% if form.month.errors %}<div class="invalid-feedback d-block">{{ form.month.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel-fill"></i> Generate</button>
+            </div>
+            {% if request.GET.year and request.GET.month %}
+            <div class="col-md-2">
+                <a href="{% url 'reports:report_monthly_summary' %}" class="btn btn-outline-secondary w-100"><i class="bi bi-x-circle"></i> Clear</a>
+            </div>
+            {% endif %}
+            {% if form.non_field_errors %}
+                <div class="col-12 alert alert-danger mt-3 p-2">{{ form.non_field_errors }}</div>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if selected_month_year_str != "Not Selected" %}
+        <h4 class="mb-3">Summary for: {{ selected_month_year_str }}</h4>
+
+        {# Regular Events Section - uses regular_events_in_month #}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Events Handled ({{ regular_events_in_month.count|intcomma }})</h5>
+            </div>
+            <div class="card-body">
+                {% if regular_events_in_month %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Ref #</th>
+                                    <th>Client</th>
+                                    <th>Event Name</th>
+                                    <th>Location</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in regular_events_in_month %}
+                                <tr>
+                                    <td><a href="{{ event.get_absolute_url }}">{{ event.reference_number }}</a></td>
+                                    <td>{% if event.client %}<a href="{% url 'clients:client_detail' client_id=event.client.id %}">{{ event.client.name }}{% if event.client.company_name %} ({{ event.client.company_name }}){% endif %}</a>{% else %}N/A{% endif %}</td>
+                                    <td>{{ event.event_name|default:"-" }}</td>
+                                    <td>{{ event.event_location|default:"-" }}</td>
+                                    <td>{{ event.start_date|date:"d M Y, H:i" }}</td>
+                                    <td>{{ event.end_date|date:"d M Y, H:i" }}</td>
+                                    <td><span class="badge 
+                                        {% if event.status == 'PLANNED' %}bg-info text-dark{% elif event.status == 'ACTIVE' %}bg-warning text-dark{% elif event.status == 'COMPLETED' %}bg-success{% elif event.status == 'CANCELLED' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ event.get_status_display }}
+                                    </span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No standard events found for this period.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Logistics Services Section - uses logistics_services_in_month #}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Logistics Services Handled ({{ logistics_services_in_month.count|intcomma }})</h5>
+            </div>
+            <div class="card-body">
+                {% if logistics_services_in_month %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Ref #</th>
+                                    <th>Client</th>
+                                    <th>Service Title</th>
+                                    <th>Primary Site</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for service in logistics_services_in_month %}
+                                <tr>
+                                    <td><a href="{{ service.get_absolute_url }}">{{ service.reference_number }}</a></td>
+                                    <td>{% if service.client %}<a href="{% url 'clients:client_detail' client_id=service.client.id %}">{{ service.client.name }}{% if service.client.company_name %} ({{ service.client.company_name }}){% endif %}</a>{% else %}N/A{% endif %}</td>
+                                    <td>{{ service.event_name|default:"-" }}</td> {# Using event_name as Service Title #}
+                                    <td>{{ service.event_location|default:"-" }}</td> {# Using event_location as Primary Site #}
+                                    <td>{{ service.start_date|date:"d M Y, H:i" }}</td>
+                                    <td>{{ service.end_date|date:"d M Y, H:i" }}</td>
+                                     <td><span class="badge 
+                                        {% if service.status == 'PLANNED' %}bg-info text-dark{% elif service.status == 'ACTIVE' %}bg-warning text-dark{% elif service.status == 'COMPLETED' %}bg-success{% elif service.status == 'CANCELLED' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ service.get_status_display }}
+                                    </span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No logistics services found for this period.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Rentals Section #}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                 <h5 class="mb-0">Rentals Handled ({{ rentals_in_month.count|intcomma }})</h5>
+            </div>
+            <div class="card-body">
+                {% if rentals_in_month %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Ref #</th>
+                                    <th>Client</th>
+                                    <th>Pickup Date</th>
+                                    <th>Return Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rental in rentals_in_month %}
+                                <tr>
+                                    <td><a href="{{ rental.get_absolute_url }}">{{ rental.reference_number }}</a></td>
+                                    <td>{% if rental.client %}<a href="{% url 'clients:client_detail' client_id=rental.client.id %}">{{ rental.client.name }}{% if rental.client.company_name %} ({{ rental.client.company_name }}){% endif %}</a>{% else %}N/A{% endif %}</td>
+                                    <td>{{ rental.start_date|date:"d M Y, H:i" }}</td>
+                                    <td>{{ rental.end_date|date:"d M Y, H:i" }}</td>
+                                     <td><span class="badge 
+                                        {% if rental.status == 'BOOKED' %}bg-info text-dark{% elif rental.status == 'OUT' %}bg-warning text-dark{% elif rental.status == 'RETURNED' %}bg-success{% elif rental.status == 'OVERDUE' %}bg-danger{% elif rental.status == 'CANCELLED' %}bg-secondary{% else %}bg-light text-dark{% endif %}">
+                                        {{ rental.get_status_display }}
+                                    </span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No rentals found for this period.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Client Summary Section #}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Client Activity (New Clients: {{ clients_summary.new_clients_count|intcomma }})</h5>
+            </div>
+            <div class="card-body">
+                {% if clients_summary.new_clients %}
+                    <h6>New Clients Registered</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Client Name</th>
+                                    <th>Company</th>
+                                    <th>Email</th>
+                                    <th>Registered On</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for client in clients_summary.new_clients %}
+                                <tr>
+                                    <td><a href="{% url 'clients:client_detail' client_id=client.id %}">{{ client.name }}</a></td>
+                                    <td>{{ client.company_name|default:"-" }}</td>
+                                    <td>{{ client.email|default:"-" }}</td>
+                                    <td>{{ client.created_at|date:"d M Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No new clients registered in this period.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Item Usage Summary Section #}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Item Usage Summary ({{ item_usage_summary|length|intcomma }} item types used)</h5>
+            </div>
+            <div class="card-body">
+                {% if item_usage_summary %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>SKU</th>
+                                    <th class="text-center">Times Used</th>
+                                    <th class="text-center">Total Qty Used</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item_data in item_usage_summary %}
+                                <tr>
+                                    <td>{{ item_data.item__name }}</td>
+                                    <td>{{ item_data.item__sku }}</td>
+                                    <td class="text-center">{{ item_data.times_used|default_if_none:"0"|intcomma }}</td>
+                                    <td class="text-center">{{ item_data.total_quantity_used|default_if_none:"0"|intcomma }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No items were used in bookings (regular events/rentals) during this period.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    {% elif request.GET.year and request.GET.month %}
+        <div class="alert alert-info mt-3">No data to display for the selected period. Please ensure the form was submitted correctly or data exists for this period.</div>
+    {% else %}
+        <div class="alert alert-secondary mt-3">Please select a year and month to generate the summary report.</div>
+    {% endif %} {# End check if form submitted #}
+
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+  <h1>{{ page_title }}</h1>
+
+  {% if is_protected %}
+    <div class="alert alert-danger">
+      <strong>Error:</strong> This item cannot be deleted because it is associated with one or more Event or Rental bookings (past or present). Please remove it from all bookings first if you intend to delete it permanently.
+    </div>
+     <a href="{% url 'inventory:item_detail' item_id=item.id %}" class="btn btn-secondary">Back to Item Details</a>
+  {% else %}
+    <div class="alert alert-warning">
+        <p class="mb-0">Are you sure you want to delete the inventory item: <strong>{{ item.name }} ({{ item.sku }})</strong>?</p>
+        <p class="mt-2"><strong>This action cannot be undone and will permanently remove the item and its associated images!</strong></p>
+    </div>
+
+    <form method="post" action="{% url 'inventory:item_delete' item_id=item.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete Permanently</button>
+        <a href="{% url 'inventory:item_detail' item_id=item.id %}" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+  {% endif %}
+
+{% endblock %}

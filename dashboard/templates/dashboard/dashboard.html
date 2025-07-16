@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+
+{% block content %}
+<style>
+    :root {
+        --primary-color: #2563eb;
+        --secondary-color: #64748b;
+        --danger-color: #dc2626;
+        --warning-color: #f59e0b;
+        --info-color: #06b6d4;
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --card-transition: all 0.3s ease;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow);
+        transition: var(--card-transition);
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+        border-radius: 12px 12px 0 0;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(90deg, #f8fafc, #e2e8f0);
+    }
+
+    .list-group-item {
+        border: none;
+        padding: 0.75rem 1.5rem;
+        transition: background-color 0.2s ease;
+    }
+
+    .list-group-item:hover {
+        background-color: #f1f5f9;
+    }
+
+    .list-group-item a {
+        color: #1e293b;
+        text-decoration: none;
+    }
+
+    .list-group-item a:hover {
+        color: var(--primary-color);
+    }
+
+    .badge {
+        padding: 0.5em 0.9em;
+        font-weight: 500;
+        border-radius: 8px;
+    }
+
+    .notifications-card .list-group {
+        max-height: 320px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--secondary-color) transparent;
+    }
+
+    .notifications-card .list-group::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .notifications-card .list-group::-webkit-scrollbar-thumb {
+        background-color: var(--secondary-color);
+        border-radius: 3px;
+    }
+
+    .page-header {
+        background: linear-gradient(90deg, var(--primary-color), #3b82f6);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+
+    .time-stamp {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    .icon-primary {
+        color: var(--primary-color);
+    }
+
+    .icon-danger {
+        color: var(--danger-color);
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+    }
+</style>
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0" style="color: #fff;">{{ page_title }}</h1>
+    <span class="time-stamp">As of: {{ current_time|date:"N j, Y, P" }}</span>
+</div>
+
+{# === Notifications Section === #}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card notifications-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 d-flex align-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bell-fill me-2 icon-primary" viewBox="0 0 16 16">
+                        <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm.995-14.901a1 1 0 1 0-1.99 0A5.002 5.002 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901z"/>
+                    </svg>
+                    Recent Notifications
+                </h5>
+                {% if unread_notifications_count > 0 %}
+                    <span class="badge bg-danger">{{ unread_notifications_count }} Unread</span>
+                {% endif %}
+            </div>
+            {% if latest_notifications %}
+                <div class="list-group list-group-flush">
+                    {% for notification in latest_notifications %}
+                        <a href="{{ notification.link|default:'#' }}" class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-warning{% endif %}">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <p class="mb-1 small">
+                                    {% if not notification.is_read %}<strong>{% endif %}
+                                    {{ notification.message|truncatewords:20 }}
+                                    {% if not notification.is_read %}</strong>{% endif %}
+                                </p>
+                                <small class="text-muted" title="{{ notification.created_at|date:'N j, Y, P' }}">
+                                    {{ notification.created_at|timesince }} ago
+                                </small>
+                            </div>
+                            {% if notification.user %}
+                                <small class="text-muted d-block" style="font-size: 0.75em;">For: {{ notification.user.username }}</small>
+                            {% elif not notification.user and notification.message %}
+                                <small class="text-muted d-block" style="font-size: 0.75em;">System Notification</small>
+                            {% endif %}
+                        </a>
+                    {% endfor %}
+                </div>
+                <div class="card-footer text-center py-2">
+                    <a href="#" class="text-muted small">View All Notifications</a>
+                </div>
+            {% else %}
+                <div class="card-body text-center">
+                    <p class="text-muted mb-0 small">No new notifications.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{# === END Notifications Section === #}
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+    {# Quick Stats #}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">Quick Stats</div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Item Types
+                        <span class="badge bg-primary">{{ total_item_types }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Quantity Owned
+                        <span class="badge bg-secondary">{{ total_quantity_owned }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Items Assigned Out (Today)
+                        <span class="badge bg-warning text-dark">{{ total_items_assigned_today }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Clients
+                        <span class="badge bg-info text-dark">{{ total_clients }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {# Upcoming Events #}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">Upcoming Events (Next 7 Days)</div>
+            <div class="card-body p-0">
+                {% if upcoming_events %}
+                    <ul class="list-group list-group-flush">
+                        {% for event in upcoming_events %}
+                            <li class="list-group-item small">
+                                <a href="{% url 'bookings:event_detail' event_id=event.id %}" class="text-decoration-none d-block">
+                                    <strong>{{ event.start_date|date:"D, M j" }}:</strong>
+                                    {{ event.client.name }} at {{ event.event_location }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="card-text text-muted p-3 small">No upcoming events found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Upcoming Rentals #}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">Upcoming Rentals (Next 7 Days)</div>
+            <div class="card-body p-0">
+                {% if upcoming_rentals %}
+                    <ul class="list-group list-group-flush">
+                        {% for rental in upcoming_rentals %}
+                            <li class="list-group-item small">
+                                <a href="{% url 'bookings:rental_detail' rental_id=rental.id %}" class="text-decoration-none d-block">
+                                    <strong>{{ rental.start_date|date:"D, M j" }}:</strong>
+                                    {{ rental.client.name }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="card-text text-muted p-3 small">No upcoming rentals found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Events Ending Soon #}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">Events Ending Soon (Due Back Today - 3 Days)</div>
+            <div class="card-body p-0">
+                {% if events_ending_soon %}
+                    <ul class="list-group list-group-flush">
+                        {% for event in events_ending_soon %}
+                            <li class="list-group-item small">
+                                <strong>Due {{ event.end_date|date:"D, M j" }}:</strong>
+                                <a href="{% url 'bookings:event_detail' event_id=event.id %}" class="text-decoration-none">{{ event.client.name }} ({{ event.reference_number }})</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="card-text text-muted p-3 small">No active events ending soon.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Rentals Ending Soon #}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">Rentals Ending Soon (Due Back Today - 3 Days)</div>
+            <div class="card-body p-0">
+                {% if rentals_ending_soon %}
+                    <ul class="list-group list-group-flush">
+                        {% for rental in rentals_ending_soon %}
+                            <li class="list-group-item small">
+                                <strong>Due {{ rental.end_date|date:"D, M j" }}:</strong>
+                                <a href="{% url 'bookings:rental_detail' rental_id=rental.id %}" class="text-decoration-none">{{ rental.client.name }} ({{ rental.reference_number }})</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="card-text text-muted p-3 small">No rentals currently out ending soon.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Overdue Rentals #}
+    <div class="col">
+        <div class="card h-100 border-danger">
+            <div class="card-header bg-danger text-white">Overdue Rentals</div>
+            <div class="card-body p-0">
+                {% if overdue_rentals %}
+                    <ul class="list-group list-group-flush">
+                        {% for rental in overdue_rentals %}
+                            <li class="list-group-item small">
+                                <a href="{% url 'bookings:rental_detail' rental_id=rental.id %}" class="text-decoration-none d-block">
+                                    <strong class="icon-danger">Due: {{ rental.end_date|date:"Y-m-d H:i" }}</strong><br>
+                                    Client: {{ rental.client.name }} (Ref: {{ rental.reference_number }})
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="card-text text-muted p-3 small">No overdue rentals found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Low Availability Items #}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header icon-danger">Low Availability Items ({{ low_stock_threshold }} or less)</div>
+            <div class="card-body p-0">
+                {% if low_stock_items %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in low_stock_items %}
+                            <li class="list-group-item small d-flex justify-content-between align-items-center">
+                                <a href="{% url 'inventory:item_detail' item_id=item.id %}" class="text-decoration-none">{{ item.name }} ({{ item.sku }})</a>
+                                <span class="badge bg-danger">{{ item.available_quantity }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="card-text text-muted p-3 small">No items currently below threshold.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Recently Added Items #}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">Recently Added Items</div>
+            <div class="card-body p-0">
+                {% if recent_items %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in recent_items %}
+                            <li class="list-group-item small">
+                                <a href="{% url 'inventory:item_detail' item_id=item.id %}" class="text-decoration-none">{{ item.name }}</a>
+                                <span class="text-muted small">({{ item.created_at|date:"M j" }})</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="card-text text-muted p-3 small">No items added recently.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Recently Added Clients #}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-header">Recently Added Clients</div>
+            <div class="card-body p-0">
+                {% if recent_clients %}
+                    <ul class="list-group list-group-flush">
+                        {% for client in recent_clients %}
+                            <li class="list-group-item small">
+                                <a href="{% url 'clients:client_detail' client_id=client.id %}" class="text-decoration-none">{{ client }}</a>
+                                <span class="text-muted small">({{ client.created_at|date:"M j" }})</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="card-text text-muted p-3 small">No clients added recently.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

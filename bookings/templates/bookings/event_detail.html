@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %} {% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ page_title }}</h1>
+        <div>
+            <a href="{% url 'bookings:event_edit' event_id=event.id %}" class="btn btn-outline-secondary me-2"><i class="bi bi-pencil-square"></i> Edit</a>
+            
+            {% if event.is_logistics_only_service %}
+                <a href="{% url 'bookings:logistics_waybill_pdf' event_id=event.id %}" target="_blank" class="btn btn-info ms-2"><i class="bi bi-truck"></i> Generate Waybill</a>
+            {% else %}
+                <a href="{% url 'bookings:delivery_note_pdf_event' booking_id=event.id %}" target="_blank" class="btn btn-info ms-2"><i class="bi bi-file-earmark-arrow-down"></i> Delivery Note</a>
+            {% endif %}
+            
+            {% if event.status == event.StatusChoices.COMPLETED %}
+                <a href="{% url 'bookings:receipt_pdf_event' booking_id=event.id %}" target="_blank" class="btn btn-success ms-2"><i class="bi bi-receipt"></i> Receipt</a>
+            {% endif %}
+            <a href="{% url 'bookings:event_delete' event_id=event.id %}" class="btn btn-outline-danger ms-2"><i class="bi bi-trash"></i> Delete</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="{% if event.is_logistics_only_service %}col-lg-12{% else %}col-lg-7{% endif %}">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    {% if event.is_logistics_only_service %}
+                        Logistics Service Core Details
+                    {% else %}
+                        Event Core Details
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-sm-end pb-2">Reference #:</dt>
+                        <dd class="col-sm-8 pb-2">{{ event.reference_number }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pb-2">Client:</dt>
+                        <dd class="col-sm-8 pb-2">{% if event.client %}<a href="{% url 'clients:client_detail' client_id=event.client.id %}">{{ event.client.name }}{% if event.client.company_name %} ({{ event.client.company_name }}){% endif %}</a>{% else %}N/A{% endif %}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pb-2">
+                            {% if event.is_logistics_only_service %}Service Title:{% else %}Event Name:{% endif %}
+                        </dt>
+                        <dd class="col-sm-8 pb-2">{{ event.event_name|default:"N/A" }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pb-2">
+                            {% if event.is_logistics_only_service %}Primary Site Location:{% else %}Event Location:{% endif %}
+                        </dt>
+                        <dd class="col-sm-8 pb-2">{{ event.event_location|default:"N/A"|linebreaksbr }}</dd>
+
+                        {% if event.project_manager_name %}
+                        <dt class="col-sm-4 text-sm-end pb-2">Project Manager:</dt>
+                        <dd class="col-sm-8 pb-2">{{ event.project_manager_name }}</dd>
+                        {% endif %}
+                        
+                        {% if event.subcontractor_name %}
+                        <dt class="col-sm-4 text-sm-end pb-2">Subcontractor:</dt>
+                        <dd class="col-sm-8 pb-2">{{ event.subcontractor_name }}</dd>
+                        {% endif %}
+                        
+                        <dt class="col-sm-4 text-sm-end pt-2 border-top">
+                            {% if event.is_logistics_only_service %}Service Start:{% else %}Event Start:{% endif %}
+                        </dt>
+                        <dd class="col-sm-8 pt-2 border-top">{{ event.start_date|date:"d M Y, H:i" }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pb-2">
+                            {% if event.is_logistics_only_service %}Service End:{% else %}Event End:{% endif %}
+                        </dt>
+                        <dd class="col-sm-8 pb-2">{{ event.end_date|date:"d M Y, H:i" }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pb-2">Status:</dt>
+                        <dd class="col-sm-8 pb-2"><span class="badge 
+                            {% if event.status == event.StatusChoices.COMPLETED %}bg-success
+                            {% elif event.status == event.StatusChoices.ACTIVE %}bg-warning text-dark
+                            {% elif event.status == event.StatusChoices.PLANNED %}bg-info text-dark
+                            {% elif event.status == event.StatusChoices.CANCELLED %}bg-danger
+                            {% else %}bg-secondary{% endif %}">
+                            {{ event.get_status_display }}
+                        </span></dd>
+
+                        {% if event.notes %}
+                        <dt class="col-sm-4 text-sm-end pb-2 pt-2 border-top">General Notes:</dt>
+                        <dd class="col-sm-8 pb-2 pt-2 border-top">{{ event.notes|linebreaksbr|default:"N/A" }}</dd>
+                        {% endif %}
+
+                        <dt class="col-sm-4 text-sm-end pt-2 border-top">Created:</dt>
+                        <dd class="col-sm-8 pt-2 border-top">{{ event.created_at|date:"d M Y, H:i" }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pb-2">Last Updated:</dt>
+                        <dd class="col-sm-8 pb-2">{{ event.updated_at|date:"d M Y, H:i" }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            {# --- Logistics Specifics Card (Conditionally Shown) --- #}
+            {% if event.is_logistics_only_service %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-bold">
+                    Logistics Specifics
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-12 pb-1 text-muted">Description of Goods Transported:</dt>
+                        <dd class="col-sm-12 pb-2 border-bottom">{{ event.description_of_goods|linebreaksbr|default:"Not specified." }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pt-2">Pickup Address (Leg 1):</dt>
+                        <dd class="col-sm-8 pt-2">{{ event.pickup_address|linebreaksbr|default:"Not specified." }}</dd>
+                        
+                        <dt class="col-sm-4 text-sm-end pb-2">Pickup Contact (Leg 1):</dt>
+                        <dd class="col-sm-8 pb-2">{{ event.pickup_contact_details|linebreaksbr|default:"Not specified." }}</dd>
+                        
+                        <dt class="col-sm-4 text-sm-end pt-2 border-top">Delivery To (Site - Override):</dt>
+                        <dd class="col-sm-8 pt-2 border-top">
+                            {{ event.delivery_address_override|linebreaksbr|default:"(Uses Primary Site Location if blank)" }}
+                        </dd>
+                        
+                        <dt class="col-sm-4 text-sm-end pb-2">Delivery Contact (Site - Leg 1):</dt>
+                        <dd class="col-sm-8 pb-2">{{ event.delivery_contact_details|linebreaksbr|default:"Not specified." }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pt-2 border-top">Return Pickup Address (Leg 2 - From Site):</dt>
+                        <dd class="col-sm-8 pt-2 border-top">
+                            {{ event.return_pickup_address|linebreaksbr|default:"(Typically same as Primary Site or Delivery Override)" }}
+                        </dd>
+                        
+                        <dt class="col-sm-4 text-sm-end pb-2">Return Pickup Contact (Leg 2):</dt>
+                        <dd class="col-sm-8 pb-2">{{ event.return_pickup_contact_details|linebreaksbr|default:"Not specified." }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pt-2 border-top">Return Delivery Address (Leg 2 - To Client/Warehouse):</dt>
+                        <dd class="col-sm-8 pt-2 border-top">{{ event.return_delivery_address|linebreaksbr|default:"Not specified." }}</dd>
+                        
+                        <dt class="col-sm-4 text-sm-end pb-2">Return Delivery Contact (Leg 2):</dt>
+                        <dd class="col-sm-8 pb-2">{{ event.return_delivery_contact_details|linebreaksbr|default:"Not specified." }}</dd>
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Booked Items Column (Conditionally Shown if NOT logistics only) #}
+        {% if not event.is_logistics_only_service %}
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Booked Items (from Your Inventory)</h5>
+                </div>
+                <div class="card-body">
+                    {% if event.items.all %}
+                        <ul class="list-group list-group-flush">
+                            {% for booking_item in event.items.all %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <a href="{% url 'inventory:item_detail' item_id=booking_item.item.id %}" class="text-decoration-none">
+                                            {{ booking_item.item.name }}
+                                        </a>
+                                        <small class="text-muted d-block">SKU: {{ booking_item.item.sku }}</small>
+                                        {% if booking_item.item.category %}
+                                        <small class="text-muted d-block">Category: {{ booking_item.item.category.name }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">{{ booking_item.quantity }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No items from your inventory are booked for this event.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="mt-4"> 
+        <a href="{% url 'bookings:event_list' %}" class="btn btn-outline-secondary">&laquo; Back to Event List</a>
+    </div>
+</div>
+
+{% endblock %}

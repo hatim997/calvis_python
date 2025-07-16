@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4"> {# Increased bottom margin #}
+    <h1>{{ page_title }}</h1>
+    <div> {# Action Buttons Group #}
+        <a href="{% url 'bookings:rental_edit' rental_id=rental.id %}" class="btn btn-outline-secondary me-2">Edit Booking</a>
+        <a href="{% url 'bookings:rental_delete' rental_id=rental.id %}" class="btn btn-outline-danger">Delete Booking</a>
+    </div>
+</div>
+
+{# === Overdue Warning === #}
+{% if rental.is_overdue %}
+    <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16" role="img" aria-label="Warning:">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+        </svg>
+        <div>
+            <strong>OVERDUE!</strong> This rental was due on {{ rental.end_date|date:"Y-m-d H:i" }} and has not been marked as Returned.
+        </div>
+    </div>
+{% endif %}
+{# === END Overdue Warning === #}
+
+<div class="row g-4">
+    <div class="col-lg-7">
+         <div class="card">
+             <div class="card-header">Rental Details</div>
+             <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-sm-end pb-2">Reference #:</dt>
+                    <dd class="col-sm-8 pb-2">{{ rental.reference_number }}</dd>
+
+                    <dt class="col-sm-4 text-sm-end pb-2">Client:</dt>
+                    <dd class="col-sm-8 pb-2">
+                        {% if rental.client %}
+                            <a href="{% url 'clients:client_detail' client_id=rental.client.id %}">{{ rental.client }}</a>
+                        {% else %} N/A {% endif %}
+                    </dd>
+
+                    {% if rental.project_manager_name %}
+                    <dt class="col-sm-4 text-sm-end pb-2">Project Manager:</dt>
+                    <dd class="col-sm-8 pb-2">{{ rental.project_manager_name }}</dd>
+                    {% endif %}
+                    
+                    {% if rental.subcontractor_name %}
+                    <dt class="col-sm-4 text-sm-end pb-2">Subcontractor:</dt>
+                    <dd class="col-sm-8 pb-2">{{ rental.subcontractor_name }}</dd>
+                    {% endif %}
+
+                    {# === NEW Delivery Location Display === #}
+                    {% if rental.delivery_location %}
+                    <dt class="col-sm-4 text-sm-end pb-2">Delivery Location:</dt>
+                    <dd class="col-sm-8 pb-2">{{ rental.delivery_location|linebreaksbr }}</dd>
+                    {% endif %}
+                    {# === END NEW Delivery Location Display === #}
+
+                    <dt class="col-sm-4 text-sm-end pt-2 {% if not rental.delivery_location %}border-top{% endif %}">Pickup Date:</dt> {# Conditional border-top #}
+                    <dd class="col-sm-8 pt-2 {% if not rental.delivery_location %}border-top{% endif %}">{{ rental.start_date|date:"Y-m-d H:i" }}</dd>
+
+                    <dt class="col-sm-4 text-sm-end pb-2">Return Date:</dt>
+                    <dd class="col-sm-8 pb-2">{{ rental.end_date|date:"Y-m-d H:i" }}</dd>
+
+                    <dt class="col-sm-4 text-sm-end pb-2">Status:</dt>
+                    <dd class="col-sm-8 pb-2"><span class="badge 
+                        {% if rental.is_overdue %}bg-danger{% elif rental.status == rental.StatusChoices.RETURNED %}bg-success{% elif rental.status == rental.StatusChoices.OUT %}bg-warning text-dark{% elif rental.status == rental.StatusChoices.BOOKED %}bg-info{% else %}bg-secondary{% endif %}">
+                        {{ rental.get_status_display }}
+                        {% if rental.is_overdue %}(Overdue!){% endif %}
+                    </span></dd>
+
+                    <dt class="col-sm-4 text-sm-end pb-2">Notes:</dt>
+                    <dd class="col-sm-8 pb-2">{{ rental.notes|linebreaksbr|default:"N/A" }}</dd>
+
+                    <dt class="col-sm-4 text-sm-end pt-2 border-top">Created:</dt>
+                    <dd class="col-sm-8 pt-2 border-top">{{ rental.created_at|date:"Y-m-d H:i" }}</dd>
+
+                    <dt class="col-sm-4 text-sm-end pb-2">Last Updated:</dt>
+                    <dd class="col-sm-8 pb-2">{{ rental.updated_at|date:"Y-m-d H:i" }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+         <div class="card h-100">
+             <div class="card-header">Booked Items</div>
+             <div class="card-body">
+                {% if rental.items.all %}
+                    <ul class="list-group list-group-flush">
+                        {% for booking_item in rental.items.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="{% url 'inventory:item_detail' item_id=booking_item.item.id %}" class="text-decoration-none">
+                                    {{ booking_item.item.name }}
+                                     <small class="text-muted"> ({{ booking_item.item.sku }})</small>
+                                </a>
+                                <span class="badge bg-primary rounded-pill">{{ booking_item.quantity }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No items booked for this rental.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+ <div class="mt-4"> {# Action buttons div at bottom #}
+    <a href="{% url 'bookings:rental_list' %}" class="btn btn-outline-secondary">&laquo; Back to Rental List</a>
+    <a href="{% url 'bookings:delivery_note_pdf_rental' booking_id=rental.id %}" target="_blank" class="btn btn-info ms-2">Generate Delivery Note (PDF)</a>
+    {% if rental.status == rental.StatusChoices.RETURNED %} {# Use model's StatusChoices #}
+        <a href="{% url 'bookings:receipt_pdf_rental' booking_id=rental.id %}" target="_blank" class="btn btn-success ms-2">Generate Receipt (PDF)</a>
+    {% endif %}
+    <a href="{% url 'bookings:rental_edit' rental_id=rental.id %}" class="btn btn-warning ms-2">Edit Booking</a>
+    <a href="{% url 'bookings:rental_delete' rental_id=rental.id %}" class="btn btn-danger ms-2">Delete Booking</a>
+</div>
+
+{% endblock %}

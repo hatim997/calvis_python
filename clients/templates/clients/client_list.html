@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{{ page_title }}</h1>
+    <a href="{% url 'clients:client_add' %}" class="btn btn-primary">+ Add New Client</a>
+</div>
+
+{% if clients %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Name / Company</th>
+                    <th>Contact Person</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th style="width: 180px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td>
+                        <a href="{% url 'clients:client_detail' client_id=client.id %}">
+                            {% if client.company_name %}
+                                {{ client.company_name }} ({{ client.name }})
+                            {% else %}
+                                {{ client.name }}
+                            {% endif %}
+                        </a>
+                    </td>
+                    <td>{{ client.contact_person|default:"-" }}</td>
+                    <td>{{ client.email }}</td>
+                    <td>{{ client.phone }}</td>
+                    <td style="white-space: nowrap;">
+                        <a href="{% url 'clients:client_detail' client_id=client.id %}" class="btn btn-sm btn-outline-primary me-1" title="Details">View</a>
+                        <a href="{% url 'clients:client_edit' client_id=client.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Edit">Edit</a>
+                        <a href="{% url 'clients:client_delete' client_id=client.id %}" class="btn btn-sm btn-outline-danger" title="Delete">Del</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        No clients found. <a href="{% url 'clients:client_add' %}" class="alert-link">Add the first client?</a>
+    </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ page_title }}</h1>
+        <div>
+            <a href="{% url 'request_quote:quote_edit' quote_id=quote.id %}" class="btn btn-outline-secondary me-2"><i class="bi bi-pencil-square"></i> Edit</a>
+            <a href="{% url 'request_quote:quote_pdf_view' quote_id=quote.id %}" target="_blank" class="btn btn-info ms-2"><i class="bi bi-file-earmark-arrow-down"></i> Quote PDF</a>
+            <a href="{% url 'request_quote:quote_delete' quote_id=quote.id %}" class="btn btn-outline-danger ms-2"><i class="bi bi-trash"></i> Delete</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    Quote Request Details
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-sm-end pb-2">Reference #:</dt>
+                        <dd class="col-sm-8 pb-2">{{ quote.reference_number }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pb-2">Client:</dt>
+                        <dd class="col-sm-8 pb-2">{{ quote.client.name|default:"N/A" }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pb-2">Event Title:</dt>
+                        <dd class="col-sm-8 pb-2">{{ quote.event_title|default:"N/A" }}</dd>
+
+                        {% if quote.project_manager %}
+                        <dt class="col-sm-4 text-sm-end pb-2">Project Manager:</dt>
+                        <dd class="col-sm-8 pb-2">{{ quote.project_manager.get_full_name|default:quote.project_manager.username }}</dd>
+                        {% endif %}
+
+                        {% if quote.subcontractors %}
+                        <dt class="col-sm-4 text-sm-end pb-2">Subcontractors:</dt>
+                        <dd class="col-sm-8 pb-2">{{ quote.subcontractors }}</dd>
+                        {% endif %}
+
+                        {% if quote.delivery_note_signed_from %}
+                        <dt class="col-sm-4 text-sm-end pb-2">Delivery Note Signed By:</dt>
+                        <dd class="col-sm-8 pb-2">{{ quote.delivery_note_signed_from }}</dd>
+                        {% endif %}
+
+                        <dt class="col-sm-4 text-sm-end pt-2 border-top">Event Start:</dt>
+                        <dd class="col-sm-8 pt-2 border-top">{{ quote.event_start_date|date:"d M Y, H:i" }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pb-2">Event End:</dt>
+                        <dd class="col-sm-8 pb-2">{{ quote.event_end_date|date:"d M Y, H:i" }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pt-2 border-top">Setup Installation:</dt>
+                        <dd class="col-sm-8 pt-2 border-top">{{ quote.setup_installation_datetime|date:"d M Y, H:i" }}</dd>
+
+                        <dt class="col-sm-4 text-sm-end pb-2">Setup Removal:</dt>
+                        <dd class="col-sm-8 pb-2">{{ quote.setup_removal_datetime|date:"d M Y, H:i" }}</dd>
+
+                        {% if quote.project_manager_notes %}
+                        <dt class="col-sm-4 text-sm-end pb-2 pt-2 border-top">Project Manager Notes:</dt>
+                        <dd class="col-sm-8 pb-2 pt-2 border-top">{{ quote.project_manager_notes|linebreaksbr|default:"N/A" }}</dd>
+                        {% endif %}
+
+                        <dt class="col-sm-4 text-sm-end pt-2 border-top">Created:</dt>
+                        <dd class="col-sm-8 pt-2 border-top">{{ quote.date_created|date:"d M Y" }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Quoted Items</h5>
+                </div>
+                <div class="card-body">
+                    {% if quote.items.all %}
+                        <ul class="list-group list-group-flush">
+                            {% for quote_item in quote.items.all %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <a href="{% url 'inventory:item_detail' item_id=quote_item.item.id %}" class="text-decoration-none">
+                                            {{ quote_item.item.name }}
+                                        </a>
+                                        <small class="text-muted d-block">SKU: {{ quote_item.item.sku }}</small>
+                                        {% if quote_item.item.category %}
+                                        <small class="text-muted d-block">Category: {{ quote_item.item.category.name }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">{{ quote_item.quantity }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No items are included in this quote request.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'request_quote:quote_list' %}" class="btn btn-outline-secondary">« Back to Quote List</a>
+    </div>
+</div>
+{% endblock %}

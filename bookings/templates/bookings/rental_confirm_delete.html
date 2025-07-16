@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+  <h1>{{ page_title }}</h1>
+
+  <div class="alert alert-warning">
+        <p class="mb-0">Are you sure you want to delete the Rental Booking:</p>
+        <ul class="my-2">
+            <li><strong>Reference #:</strong> {{ rental.reference_number }}</li>
+            <li><strong>Client:</strong> {{ rental.client }}</li>
+            <li><strong>Dates:</strong> {{ rental.start_date|date:"Y-m-d H:i" }} to {{ rental.end_date|date:"Y-m-d H:i" }}</li>
+        </ul>
+        <p class="mt-2"><strong>This action cannot be undone and will permanently remove this booking and its associated item allocations!</strong></p>
+  </div>
+
+  <form method="post" action="{% url 'bookings:rental_delete' rental_id=rental.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, Delete Booking</button>
+      <a href="{% url 'bookings:rental_detail' rental_id=rental.id %}" class="btn btn-secondary ms-2">Cancel</a>
+  </form>
+
+{% endblock %}

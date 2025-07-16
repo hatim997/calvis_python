@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{{ page_title }}</h1>
+     <div class="report-actions">
+        <span class="me-2">Download Report:</span>
+        <a href="?format=xlsx" class="btn btn-success btn-sm">Excel (.xlsx)</a>
+        <a href="?format=pdf" class="btn btn-danger btn-sm ms-2">PDF (.pdf)</a>
+        <a href="?format=docx" class="btn btn-primary btn-sm ms-2">Word (.docx)</a>
+    </div>
+</div>
+
+
+{% if items %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>SKU</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Location</th>
+                    <th>Initial Qty</th>
+                    <th>Available Qty</th>
+                    <th>Purchase Price</th>
+                    <th>Rent Price/Day</th>
+                    <th>D</th> {# Added Depth Header #}
+                    <th>W</th> {# Added Width Header #}
+                    <th>H</th> {# Added Height Header #}
+                    <th>Unit</th> {# Added Unit Header #}
+                    <th>Supplier</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.sku|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'inventory:item_detail' item_id=item.id %}">{{ item.name }}</a>
+                    </td>
+                    <td>{{ item.category.name|default:"-" }}</td>
+                    <td>{{ item.storage_location|default:"-" }}</td>
+                    <td>{{ item.initial_quantity }}</td>
+                    <td>{{ item.available_quantity }}</td>
+                    <td>{{ item.purchase_price|default:"N/A" }} BHD</td>
+                    <td>{{ item.rent_price_per_day|default:"N/A" }} BHD</td>
+                    <td>{{ item.depth|default:"-" }}</td> {# Added Depth Data #}
+                    <td>{{ item.width|default:"-" }}</td> {# Added Width Data #}
+                    <td>{{ item.height|default:"-" }}</td> {# Added Height Data #}
+                    <td>{{ item.get_dimension_unit_display }}</td> {# Added Unit Data #}
+                    <td>{{ item.supplier.name|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+     <div class="alert alert-info">No inventory items found.</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<h1>{{ page_title }}</h1>
+
+<form method="get" action="" class="filter-form card card-body mb-4">
+    <div class="row g-3 align-items-end">
+         <div class="col-md-4">
+            <label for="{{ form.item.id_for_label }}" class="form-label">{{ form.item.label }}</label>
+            {{ form.item }}
+            {% if form.item.errors %}<div class="invalid-feedback d-block">{{ form.item.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-3">
+            <label for="{{ form.start_date.id_for_label }}" class="form-label">{{ form.start_date.label }}</label>
+            {{ form.start_date }}
+             {% if form.start_date.errors %}<div class="invalid-feedback d-block">{{ form.start_date.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-3">
+            <label for="{{ form.end_date.id_for_label }}" class="form-label">{{ form.end_date.label }}</label>
+            {{ form.end_date }}
+             {% if form.end_date.errors %}<div class="invalid-feedback d-block">{{ form.end_date.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Check</button>
+        </div>
+    </div>
+     {% if form.non_field_errors %}
+        <div class="alert alert-danger mt-3">{{ form.non_field_errors }}</div>
+    {% endif %}
+</form>
+
+{% if selected_item %}
+    <hr>
+    <h2>Availability for: {{ selected_item.name }} ({{ selected_item.sku }})</h2>
+    <p><strong>Date Range:</strong> {{ start_date|date:"Y-m-d" }} to {{ end_date|date:"Y-m-d" }}</p>
+    <p><strong>Total Owned:</strong> {{ selected_item.initial_quantity }}</p>
+
+    {% if not overlapping_events and not overlapping_rentals %}
+         <div class="alert alert-success">This item has no bookings overlapping the selected date range.</div>
+    {% else %}
+         <div class="alert alert-warning">This item has the following bookings overlapping the selected date range:</div>
+
+        {% if overlapping_events %}
+            <h3>Overlapping Events</h3>
+             <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ref #</th>
+                            <th>Client</th>
+                            <th>Event Dates</th>
+                            <th>Status</th>
+                            <th>Qty Booked</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event_item in overlapping_events %}
+                        <tr>
+                            <td><a href="{% url 'bookings:event_detail' event_id=event_item.booking.id %}">{{ event_item.booking.reference_number }}</a></td>
+                            <td>{% if event_item.booking.client %}<a href="{% url 'clients:client_detail' client_id=event_item.booking.client.id %}">{{ event_item.booking.client }}</a>{% else %}N/A{% endif %}</td>
+                            <td>{{ event_item.booking.start_date|date:"Y-m-d H:i" }} - {{ event_item.booking.end_date|date:"Y-m-d H:i" }}</td>
+                            <td>{{ event_item.booking.get_status_display }}</td>
+                            <td>{{ event_item.quantity }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if overlapping_rentals %}
+            <h3 class="mt-4">Overlapping Rentals</h3>
+              <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                     <thead class="table-light">
+                        <tr>
+                            <th>Ref #</th>
+                            <th>Client</th>
+                            <th>Rental Dates</th>
+                            <th>Status</th>
+                            <th>Qty Booked</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rental_item in overlapping_rentals %}
+                        <tr>
+                            <td><a href="{% url 'bookings:rental_detail' rental_id=rental_item.booking.id %}">{{ rental_item.booking.reference_number }}</a></td>
+                            <td>{% if rental_item.booking.client %}<a href="{% url 'clients:client_detail' client_id=rental_item.booking.client.id %}">{{ rental_item.booking.client }}</a>{% else %}N/A{% endif %}</td>
+                            <td>{{ rental_item.booking.start_date|date:"Y-m-d H:i" }} - {{ rental_item.booking.end_date|date:"Y-m-d H:i" }}</td>
+                            <td>{{ rental_item.booking.get_status_display }}</td>
+                            <td>{{ rental_item.quantity }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+             </div>
+        {% endif %}
+    {% endif %} {# End check if results exist #}
+
+{% elif request.GET %} {# If form submitted but invalid (e.g., no dates) #}
+    <div class="alert alert-info">Please provide a valid item and date range.</div>
+{% else %}
+     <div class="alert alert-secondary">Please select an item and date range to check availability.</div>
+{% endif %} {# End check if form submitted #}
+
+
+{% endblock %}

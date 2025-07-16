@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+  <h1>{{ page_title }}</h1>
+
+  <div class="alert alert-warning">
+    <p class="mb-0">Are you sure you want to delete the Event Booking:</p>
+    <ul class="my-2">
+        <li><strong>Reference #:</strong> {{ event.reference_number }}</li>
+        <li><strong>Client:</strong> {{ event.client }}</li>
+        <li><strong>Dates:</strong> {{ event.start_date|date:"Y-m-d H:i" }} to {{ event.end_date|date:"Y-m-d H:i" }}</li>
+    </ul>
+    <p class="mt-2"><strong>This action cannot be undone and will permanently remove this booking and its associated item allocations!</strong></p>
+  </div>
+
+  <form method="post" action="{% url 'bookings:event_delete' event_id=event.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, Delete Booking</button>
+      <a href="{% url 'bookings:event_detail' event_id=event.id %}" class="btn btn-secondary ms-2">Cancel</a>
+  </form>
+
+{% endblock %}

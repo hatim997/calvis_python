@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ page_title }}</h1>
+    {# No specific action buttons here, part of form below #}
+</div>
+
+<div class="card form-card"> {# Wrap form in a card for consistent styling #}
+    <div class="card-body">
+        {% if rental %}
+            <form method="post" action="{% url 'bookings:rental_edit' rental_id=rental.id %}" novalidate>
+        {% else %}
+            <form method="post" action="{% url 'bookings:rental_add' %}" novalidate>
+        {% endif %}
+
+            {% csrf_token %}
+
+            {% if rental_form.non_field_errors %}
+                <div class="alert alert-danger">{{ rental_form.non_field_errors }}</div>
+            {% endif %}
+
+            {# --- Rental Details Section --- #}
+            <h5 class="card-title mb-3">Rental Details</h5>
+            
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="{{ rental_form.client.id_for_label }}" class="form-label">{{ rental_form.client.label }}</label>
+                    {{ rental_form.client }}
+                    {% if rental_form.client.help_text %}<div class="form-text">{{ rental_form.client.help_text }}</div>{% endif %}
+                    {% for error in rental_form.client.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="{{ rental_form.project_manager_name.id_for_label }}" class="form-label">{{ rental_form.project_manager_name.label }}</label>
+                    {{ rental_form.project_manager_name }}
+                    {% if rental_form.project_manager_name.help_text %}<div class="form-text">{{ rental_form.project_manager_name.help_text }}</div>{% endif %}
+                    {% for error in rental_form.project_manager_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ rental_form.subcontractor_name.id_for_label }}" class="form-label">{{ rental_form.subcontractor_name.label }}</label>
+                    {{ rental_form.subcontractor_name }}
+                    {% if rental_form.subcontractor_name.help_text %}<div class="form-text">{{ rental_form.subcontractor_name.help_text }}</div>{% endif %}
+                    {% for error in rental_form.subcontractor_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+
+            {# === NEW Delivery Location Field === #}
+            <div class="mb-3">
+                <label for="{{ rental_form.delivery_location.id_for_label }}" class="form-label">{{ rental_form.delivery_location.label }}</label>
+                {{ rental_form.delivery_location }}
+                {% if rental_form.delivery_location.help_text %}<div class="form-text">{{ rental_form.delivery_location.help_text }}</div>{% endif %}
+                {% for error in rental_form.delivery_location.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            {# === END NEW Delivery Location Field === #}
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="{{ rental_form.start_date.id_for_label }}" class="form-label">{{ rental_form.start_date.label }}</label>
+                    {{ rental_form.start_date }}
+                    {% if rental_form.start_date.help_text %}<div class="form-text">{{ rental_form.start_date.help_text }}</div>{% endif %}
+                    {% for error in rental_form.start_date.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ rental_form.end_date.id_for_label }}" class="form-label">{{ rental_form.end_date.label }}</label>
+                    {{ rental_form.end_date }}
+                    {% if rental_form.end_date.help_text %}<div class="form-text">{{ rental_form.end_date.help_text }}</div>{% endif %}
+                    {% for error in rental_form.end_date.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+            
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="{{ rental_form.status.id_for_label }}" class="form-label">{{ rental_form.status.label }}</label>
+                    {{ rental_form.status }}
+                    {% if rental_form.status.help_text %}<div class="form-text">{{ rental_form.status.help_text }}</div>{% endif %}
+                    {% for error in rental_form.status.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ rental_form.notes.id_for_label }}" class="form-label">{{ rental_form.notes.label }}</label>
+                {{ rental_form.notes }}
+                {% if rental_form.notes.help_text %}<div class="form-text">{{ rental_form.notes.help_text }}</div>{% endif %}
+                {% for error in rental_form.notes.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            
+            {# --- Book Items Section (Formset) --- #}
+            <hr class="my-4">
+            <h5 class="card-title mb-3">Book Items</h5>
+            
+            {{ item_formset.management_form }} {# Required hidden formset fields FIRST #}
+
+            {% if item_formset.non_form_errors %}
+                <div class="alert alert-danger">{{ item_formset.non_form_errors }}</div>
+            {% endif %}
+
+            <div id="item-formset-container"> {# Main container for all formset rows #}
+                {# Optional: Headers for item rows, visible on medium screens and up #}
+                 <div class="row gx-2 mb-2 d-none d-md-flex">
+                    <div class="col-md-6"><label class="form-label small fw-bold">Item</label></div>
+                    <div class="col-md-3"><label class="form-label small fw-bold">Quantity</label></div>
+                    <div class="col-md-3 text-center"><label class="form-label small fw-bold">Action</label></div>
+                </div>
+
+                {% for form in item_formset %}
+                    <div class="item-form-row row gx-2 mb-3 align-items-center {% if form.errors %}border border-danger rounded p-2{% else %}border-bottom pb-3{% endif %}" id="{{ form.prefix }}-row">
+                        {% for hidden in form.hidden_fields %} {{ hidden }} {% endfor %}
+                        <div class="col-md-6">
+                             <span class="d-md-none small fw-bold">{{ form.item.label }}:</span>
+                             {{ form.item }}
+                             {% for error in form.item.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-3">
+                             <span class="d-md-none small fw-bold">{{ form.quantity.label }}:</span>
+                             {{ form.quantity }}
+                             {% for error in form.quantity.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        </div>
+                         <div class="col-md-3 text-center">
+                             {% if form.instance.pk and item_formset.can_delete %}
+                                 <div class="form-check d-none"> 
+                                     {{ form.DELETE }}
+                                 </div>
+                              {% endif %}
+                         </div>
+                         {% if form.non_field_errors %} <div class="col-12 text-danger small mt-1">{{ form.non_field_errors }}</div> {% endif %}
+                         {% for error_key, error_list in form.errors.items %}
+                            {% if error_key != 'item' and error_key != 'quantity' and error_key != 'DELETE' %}
+                                {% for error in error_list %}
+                                    <div class="col-12 text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                         {% endfor %}
+                    </div>
+                {% endfor %}
+            </div> {# End #item-formset-container #}
+
+            {# The dynamic formset plugin will add its "Add" button here #}
+
+            <div class="mt-4 pt-3 border-top">
+                <button type="submit" class="btn btn-primary">
+                     {% if rental %}Update{% else %}Save{% endif %} Rental Booking
+                </button>
+                {% if rental %}
+                     <a href="{% url 'bookings:rental_detail' rental_id=rental.id %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                {% else %}
+                    <a href="{% url 'bookings:rental_list' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }} {# Includes Flatpickr, jQuery, jquery.formset.js from base.html #}
+<script>
+    $(document).ready(function() {
+        $('#item-formset-container .item-form-row').formset({
+            prefix: '{{ item_formset.prefix }}',
+            addText: '<i class="bi bi-plus-circle-fill me-1"></i> Add Item',
+            deleteText: '<i class="bi bi-trash-fill"></i> Remove',
+            addCssClass: 'btn btn-sm btn-outline-success add-row mt-2 mb-3',
+            deleteCssClass: 'btn btn-sm btn-outline-danger delete-row',
+            formCssClass: 'dynamic-item-form',
+            added: function(row) {
+                // console.log('Rental item row added:', row);
+            },
+            removed: function(row) {
+                // console.log('Rental item row removed:', row);
+            }
+        });
+    });
+</script>
+{# If using Bootstrap Icons for the buttons, ensure the CDN link is in base.html or add it here #}
+{# <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"> #}
+{% endblock %}

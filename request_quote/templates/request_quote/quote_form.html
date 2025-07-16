@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ page_title }}</h1>
+
+    {% if messages %}
+        <div class="mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if quote_request %}
+        <form method="post" action="{% url 'request_quote:quote_edit' quote_id=quote_request.id %}" novalidate>
+    {% else %}
+        <form method="post" action="{% url 'request_quote:quote_add' %}" novalidate>
+    {% endif %}
+        {% csrf_token %}
+
+        {% if quote_form.non_field_errors %}
+            <div class="alert alert-danger p-2">
+                {% for error in quote_form.non_field_errors %}
+                    <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if item_formset.non_form_errors %}
+            <div class="alert alert-danger p-2">
+                {% for error in item_formset.non_form_errors %}
+                    <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# --- Quote Request Details Card --- #}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Quote Request Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ quote_form.client.id_for_label }}" class="form-label">{{ quote_form.client.label }}</label>
+                        {{ quote_form.client }}
+                        {% if quote_form.client.help_text %}
+                            <div class="form-text">{{ quote_form.client.help_text|safe }}</div>
+                        {% endif %}
+                        {% for error in quote_form.client.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% comment %} <div class="col-md-6 mb-3">
+                        <label for="{{ quote_form.client_name.id_for_label }}" class="form-label">{{ quote_form.client_name.label }}</label>
+                        {{ quote_form.client_name }}
+                        {% if quote_form.client_name.help_text %}
+                            <div class="form-text">{{ quote_form.client_name.help_text|safe }}</div>
+                        {% endif %}
+                        {% for error in quote_form.client_name.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div> {% endcomment %}
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ quote_form.event_title.id_for_label }}" class="form-label">{{ quote_form.event_title.label }}</label>
+                        {{ quote_form.event_title }}
+                        {% if quote_form.event_title.help_text %}
+                            <div class="form-text">{{ quote_form.event_title.help_text|safe }}</div>
+                        {% endif %}
+                        {% for error in quote_form.event_title.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ quote_form.event_start_date.id_for_label }}" class="form-label">{{ quote_form.event_start_date.label }}</label>
+                        {{ quote_form.event_start_date }}
+                        {% if quote_form.event_start_date.help_text %}
+                            <div class="form-text">{{ quote_form.event_start_date.help_text|safe }}</div>
+                        {% endif %}
+                        {% for error in quote_form.event_start_date.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ quote_form.event_end_date.id_for_label }}" class="form-label">{{ quote_form.event_end_date.label }}</label>
+                        {{ quote_form.event_end_date }}
+                        {% if quote_form.event_end_date.help_text %}
+                            <div class="form-text">{{ quote_form.event_end_date.help_text|safe }}</div>
+                        {% endif %}
+                        {% for error in quote_form.event_end_date.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ quote_form.setup_installation_datetime.id_for_label }}" class="form-label">{{ quote_form.setup_installation_datetime.label }}</label>
+                        {{ quote_form.setup_installation_datetime }}
+                        {% if quote_form.setup_installation_datetime.help_text %}
+                            <div class="form-text">{{ quote_form.setup_installation_datetime.help_text|safe }}</div>
+                        {% endif %}
+                        {% for error in quote_form.setup_installation_datetime.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ quote_form.setup_removal_datetime.id_for_label }}" class="form-label">{{ quote_form.setup_removal_datetime.label }}</label>
+                        {{ quote_form.setup_removal_datetime }}
+                        {% if quote_form.setup_removal_datetime.help_text %}
+                            <div class="form-text">{{ quote_form.setup_removal_datetime.help_text|safe }}</div>
+                        {% endif %}
+                        {% for error in quote_form.setup_removal_datetime.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {# -- Quote Project Manager, Subcontractors & Delivery Note -- #}
+                {% if is_superuser %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ quote_form.project_manager.id_for_label }}" class="form-label">{{ quote_form.project_manager.label }}</label>
+                            {{ quote_form.project_manager }}
+                            {% if quote_form.project_manager.help_text %}
+                                <div class="form-text">{{ quote_form.project_manager.help_text|safe }}</div>
+                            {% endif %}
+                            {% for error in quote_form.project_manager.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ quote_form.subcontractors.id_for_label }}" class="form-label">{{ quote_form.subcontractors.label }}</label>
+                            {{ quote_form.subcontractors }}
+                            {% if quote_form.subcontractors.help_text %}
+                                <div class="form-text">{{ quote_form.subcontractors.help_text|safe }}</div>
+                            {% endif %}
+                            {% for error in quote_form.subcontractors.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ quote_form.delivery_note_signed_from.id_for_label }}" class="form-label">{{ quote_form.delivery_note_signed_from.label }}</label>
+                            {{ quote_form.delivery_note_signed_from }}
+                            {% if quote_form.delivery_note_signed_from.help_text %}
+                                <div class="form-text">{{ quote_form.delivery_note_signed_from.help_text|safe }}</div>
+                            {% endif %}
+                            {% for error in quote_form.delivery_note_signed_from.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% else %}
+                    {{ quote_form.project_manager }} {# hidden input #}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ quote_form.subcontractors.id_for_label }}" class="form-label">{{ quote_form.subcontractors.label }}</label>
+                            {{ quote_form.subcontractors }}
+                            {% if quote_form.subcontractors.help_text %}
+                                <div class="form-text">{{ quote_form.subcontractors.help_text|safe }}</div>
+                            {% endif %}
+                            {% for error in quote_form.subcontractors.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ quote_form.delivery_note_signed_from.id_for_label }}" class="form-label">{{ quote_form.delivery_note_signed_from.label }}</label>
+                            {{ quote_form.delivery_note_signed_from }}
+                            {% if quote_form.delivery_note_signed_from.help_text %}
+                                <div class="form-text">{{ quote_form.delivery_note_signed_from.help_text|safe }}</div>
+                            {% endif %}
+                            {% for error in quote_form.delivery_note_signed_from.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ quote_form.project_manager_notes.id_for_label }}" class="form-label">{{ quote_form.project_manager_notes.label }}</label>
+                    {{ quote_form.project_manager_notes }}
+                    {% if quote_form.project_manager_notes.help_text %}
+                        <div class="form-text">{{ quote_form.project_manager_notes.help_text|safe }}</div>
+                    {% endif %}
+                    {% for error in quote_form.project_manager_notes.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {# --- Quote Items Card (Formset) --- #}
+        <div class="card" id="items-formset-card">
+            <div class="card-header">
+                <h5 class="mb-0">Quote Request Items</h5>
+            </div>
+            <div class="card-body">
+                {{ item_formset.management_form }}
+                <div id="item-formset-container">
+                    <div class="row gx-2 mb-2 d-none d-md-flex fw-bold">
+                        <div class="col-md-7">Item</div>
+                        <div class="col-md-3">Quantity</div>
+                        <div class="col-md-2 text-center">Action</div>
+                    </div>
+                    {% for form in item_formset %}
+                        <div class="item-form-row row gx-2 mb-3 border-bottom pb-2 {% if form.errors %}border border-danger rounded p-2{% endif %}" id="{{ form.prefix }}-row">
+                            {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                            <div class="col-md-7 mb-2 mb-md-0">
+                                <label for="{{ form.item.id_for_label }}" class="form-label d-md-none">{{ form.item.label }}</label>
+                                {{ form.item }}
+                                {% if form.item.help_text %}
+                                    <div class="form-text">{{ form.item.help_text|safe }}</div>
+                                {% endif %}
+                                {% for error in form.item.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-3 mb-2 mb-md-0">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label d-md-none">{{ form.quantity.label }}</label>
+                                {{ form.quantity }}
+                                {% for error in form.quantity.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-2 text-center">
+                                {% if form.instance.pk and item_formset.can_delete %}
+                                    <div class="form-check" style="display: none;">
+                                        {{ form.DELETE }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% if form.non_field_errors %}
+                                <div class="col-12 text-danger small mt-1">
+                                    {% for error in form.non_field_errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-success add-row mt-2" id="add-item-button">
+                    <i class="bi bi-plus-circle-fill me-1"></i> Add Another Item
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                {% if quote_request %}Update{% else %}Create{% endif %} Quote Request
+            </button>
+            <a href="{% if quote_request %}{% url 'request_quote:quote_detail' quote_id=quote_request.id %}{% else %}{% url 'request_quote:quote_list' %}{% endif %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+<script src="{% static 'js/jquery.formset.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize formset
+    if (typeof $ !== 'undefined' && $.fn.formset) {
+        $('#item-formset-container .item-form-row').formset({
+            prefix: '{{ item_formset.prefix }}',
+            addText: '<i class="bi bi-plus-circle-fill me-1"></i> Add Item',
+            deleteText: '<i class="bi bi-trash-fill"></i> Remove',
+            addCssClass: 'btn btn-sm btn-outline-success add-row mt-2 mb-3',
+            deleteCssClass: 'btn btn-sm btn-outline-danger delete-row ms-2',
+            formCssClass: 'dynamic-item-form',
+            added: function(row) {
+                console.log('Quote item row added:', row);
+                // Re-initialize Flatpickr for any new datetime fields (if applicable)
+                flatpickr(row.find(".flatpickr-datetime"), {
+                    enableTime: true,
+                    dateFormat: "Y-m-d H:i",
+                    altInput: true,
+                    altFormat: "F j, Y H:i",
+                });
+            },
+            removed: function(row) {
+                console.log('Quote item row removed:', row);
+            }
+        });
+    } else {
+        console.error("jQuery or jQuery.formset not loaded. Item formset functionality might be limited.");
+    }
+
+    // Handle the external "Add Another Item" button
+    const addItemButton = document.getElementById('add-item-button');
+    if (addItemButton) {
+        addItemButton.addEventListener('click', function() {
+            if (typeof $ !== 'undefined' && $.fn.formset) {
+                const formsetRows = $('#item-formset-container .item-form-row');
+                if (formsetRows.length > 0) {
+                    const pluginAddButton = $(`.add-row[data-formset-prefix="{{ item_formset.prefix }}"]`);
+                    if (pluginAddButton.length > 0) {
+                        pluginAddButton.click();
+                    } else {
+                        console.warn("Could not find formset plugin's add button to trigger.");
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize Flatpickr for datetime fields
+    flatpickr(".flatpickr-datetime", {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        altInput: true,
+        altFormat: "F j, Y H:i",
+    });
+});
+</script>
+{% endblock %}

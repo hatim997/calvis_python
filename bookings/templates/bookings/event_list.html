@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{{ page_title }}</h1>
+    <a href="{% url 'bookings:event_add' %}" class="btn btn-primary">+ Add New Event</a>
+</div>
+
+
+{% if events %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Reference #</th>
+                    <th>Client</th>
+                    <th>Location</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                    <th style="width: 150px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>
+                        <a href="{% url 'bookings:event_detail' event_id=event.id %}">{{ event.reference_number }}</a>
+                    </td>
+                    <td>
+                        {% if event.client %}
+                        <a href="{% url 'clients:client_detail' client_id=event.client.id %}">{{ event.client }}</a>
+                        {% else %} N/A {% endif %}
+                    </td>
+                    <td>{{ event.event_location }}</td>
+                    <td>{{ event.start_date|date:"j M Y" }}</td>
+                    <td>{{ event.end_date|date:"j M Y" }}</td>
+                    <td><span class="badge bg-secondary">{{ event.get_status_display }}</span></td> {# Use badge for status #}
+                    <td style="white-space: nowrap;">
+                        <a href="{% url 'bookings:event_detail' event_id=event.id %}" class="btn btn-sm btn-outline-primary me-1" title="Details">View</a>
+                        <a href="{% url 'bookings:event_edit' event_id=event.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Edit">Edit</a>
+                        <a href="{% url 'bookings:event_delete' event_id=event.id %}" class="btn btn-sm btn-outline-danger" title="Delete">Del</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+     <div class="alert alert-info">No event bookings found. <a href="{% url 'bookings:event_add' %}" class="alert-link">Add the first one?</a></div>
+{% endif %}
+
+{% endblock %}

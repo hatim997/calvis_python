@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{{ page_title }}</h1>
+    <a href="{% url 'bookings:rental_add' %}" class="btn btn-primary">+ Add New Rental</a>
+</div>
+
+{% if rentals %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Reference #</th>
+                    <th>Client</th>
+                    <th>Start Date (Pickup)</th>
+                    <th>End Date (Return)</th>
+                    <th>Status</th>
+                    <th style="width: 150px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rental in rentals %}
+                {# Add class 'table-danger' if rental is overdue #}
+                <tr class="{% if rental.is_overdue %}table-danger{% endif %}">
+                    <td>
+                        <a href="{% url 'bookings:rental_detail' rental_id=rental.id %}">{{ rental.reference_number }}</a>
+                    </td>
+                    <td>
+                        {% if rental.client %}
+                        <a href="{% url 'clients:client_detail' client_id=rental.client.id %}">{{ rental.client }}</a>
+                        {% else %}N/A {% endif %}
+                    </td>
+                    <td>{{ rental.start_date|date:"j M Y" }}</td>
+                    <td>{{ rental.end_date|date:"j M Y" }}</td>
+                    <td>
+                        {# Dynamically change badge color based on status, especially for overdue #}
+                        <span class="badge 
+                            {% if rental.is_overdue %}bg-danger{% elif rental.status == 'RETURNED' %}bg-success{% elif rental.status == 'OUT' %}bg-warning text-dark{% elif rental.status == 'BOOKED' %}bg-info{% else %}bg-secondary{% endif %}">
+                            {{ rental.get_status_display }}
+                            {% if rental.is_overdue %}(Overdue!){% endif %}
+                        </span>
+                    </td>
+                    <td style="white-space: nowrap;">
+                        <a href="{% url 'bookings:rental_detail' rental_id=rental.id %}" class="btn btn-sm btn-outline-primary me-1" title="Details">View</a>
+                        <a href="{% url 'bookings:rental_edit' rental_id=rental.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Edit">Edit</a>
+                        <a href="{% url 'bookings:rental_delete' rental_id=rental.id %}" class="btn btn-sm btn-outline-danger" title="Delete">Del</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">No rental bookings found. <a href="{% url 'bookings:rental_add' %}" class="alert-link">Add the first one?</a></div>
+{% endif %}
+
+{% endblock %}

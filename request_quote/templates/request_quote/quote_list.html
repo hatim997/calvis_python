@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{{ page_title }}</h1>
+    <a href="{% url 'request_quote:quote_add' %}" class="btn btn-primary">+ Add New Quote</a>
+</div>
+
+{% if quotes %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Reference #</th>
+                    <th>Client</th>
+                    <th>Event Title</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th style="width: 150px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quote in quotes %}
+                <tr>
+                    <td>
+                        <a href="{% url 'request_quote:quote_detail' quote_id=quote.id %}">{{ quote.reference_number }}</a>
+                    </td>
+                    <td>
+                        {% if quote.client %}
+                        <a href="{% url 'clients:client_detail' client_id=quote.client.id %}">{{ quote.client }}</a>
+                        {% else %} N/A {% endif %}
+                    </td>
+                    <td>{{ quote.event_title }}</td>
+                    <td>{{ quote.event_start_date|date:"j M Y" }}</td>
+                    <td>{{ quote.event_end_date|date:"j M Y" }}</td>
+                    <td style="white-space: nowrap;">
+                        <a href="{% url 'request_quote:quote_detail' quote_id=quote.id %}" class="btn btn-sm btn-outline-primary me-1" title="Details">View</a>
+                        <a href="{% url 'request_quote:quote_edit' quote_id=quote.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Edit">Edit</a>
+                        <a href="{% url 'request_quote:quote_delete' quote_id=quote.id %}" class="btn btn-sm btn-outline-danger" title="Delete">Del</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        No quote requests found. 
+        <a href="{% url 'request_quote:quote_add' %}" class="alert-link">Add the first one?</a>
+    </div>
+{% endif %}
+
+{% endblock %}
