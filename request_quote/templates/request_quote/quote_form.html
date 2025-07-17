@@ -42,7 +42,7 @@
         {# --- Quote Request Details Card --- #}
         <div class="card mb-4 shadow-sm">
             <div class="card-header">
-                <h5 class="mb-0">Quote Request Details</h5>
+                <h5 class="mb-0">Request Details</h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -202,7 +202,7 @@
         {# --- Quote Items Card (Formset) --- #}
         <div class="card" id="items-formset-card">
             <div class="card-header">
-                <h5 class="mb-0">Quote Request Items</h5>
+                <h5 class="mb-0">Request Items</h5>
             </div>
             <div class="card-body">
                 {{ item_formset.management_form }}
@@ -210,7 +210,6 @@
                     <div class="row gx-2 mb-2 d-none d-md-flex fw-bold">
                         <div class="col-md-7">Item</div>
                         <div class="col-md-3">Quantity</div>
-                        <div class="col-md-2 text-center">Action</div>
                     </div>
                     {% for form in item_formset %}
                         <div class="item-form-row row gx-2 mb-3 border-bottom pb-2 {% if form.errors %}border border-danger rounded p-2{% endif %}" id="{{ form.prefix }}-row">
@@ -251,15 +250,12 @@
                         </div>
                     {% endfor %}
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-success add-row mt-2" id="add-item-button">
-                    <i class="bi bi-plus-circle-fill me-1"></i> Add Another Item
-                </button>
             </div>
         </div>
 
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">
-                {% if quote_request %}Update{% else %}Create{% endif %} Quote Request
+                {% if quote_request %}Update{% else %}Create{% endif %} Request
             </button>
             <a href="{% if quote_request %}{% url 'request_quote:quote_detail' quote_id=quote_request.id %}{% else %}{% url 'request_quote:quote_list' %}{% endif %}" class="btn btn-outline-secondary ms-2">Cancel</a>
         </div>

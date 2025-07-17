@@ -21,16 +21,28 @@
 
     <div class="card card-body mb-4 shadow-sm filter-form">
         <form method="get" action="" class="row g-3 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-2">
                 <label for="{{ form.year.id_for_label }}" class="form-label">{{ form.year.label }}</label>
                 {{ form.year }}
                 {% if form.year.errors %}<div class="invalid-feedback d-block">{{ form.year.errors|join:", " }}</div>{% endif %}
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
                 <label for="{{ form.month.id_for_label }}" class="form-label">{{ form.month.label }}</label>
                 {{ form.month }}
                 {% if form.month.errors %}<div class="invalid-feedback d-block">{{ form.month.errors|join:", " }}</div>{% endif %}
             </div>
+            {% if form.project_manager %}
+                <div class="col-md-4">
+                    <label for="{{ form.project_manager.id_for_label }}" class="form-label">{{ form.project_manager.label }}</label>
+                    {{ form.project_manager }}
+                    {% if form.project_manager.help_text %}
+                        <div class="form-text">{{ form.project_manager.help_text }}</div>
+                    {% endif %}
+                    {% if form.project_manager.errors %}
+                        <div class="invalid-feedback d-block">{{ form.project_manager.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+            {% endif %}
             <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel-fill"></i> Generate</button>
             </div>
@@ -61,6 +73,7 @@
                                 <tr>
                                     <th>Ref #</th>
                                     <th>Client</th>
+                                    <th>Project Manager</th>
                                     <th>Event Name</th>
                                     <th>Location</th>
                                     <th>Start Date</th>
@@ -73,6 +86,7 @@
                                 <tr>
                                     <td><a href="{{ event.get_absolute_url }}">{{ event.reference_number }}</a></td>
                                     <td>{% if event.client %}<a href="{% url 'clients:client_detail' client_id=event.client.id %}">{{ event.client.name }}{% if event.client.company_name %} ({{ event.client.company_name }}){% endif %}</a>{% else %}N/A{% endif %}</td>
+                                    <td>{{ event.project_manager.get_full_name|default:"N/A" }}</td>
                                     <td>{{ event.event_name|default:"-" }}</td>
                                     <td>{{ event.event_location|default:"-" }}</td>
                                     <td>{{ event.start_date|date:"d M Y, H:i" }}</td>

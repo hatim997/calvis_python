@@ -36,11 +36,21 @@
             </div>
 
             <div class="row g-3 mb-3">
-                <div class="col-md-6">
+                {% comment %} <div class="col-md-6">
                     <label for="{{ rental_form.project_manager_name.id_for_label }}" class="form-label">{{ rental_form.project_manager_name.label }}</label>
                     {{ rental_form.project_manager_name }}
                     {% if rental_form.project_manager_name.help_text %}<div class="form-text">{{ rental_form.project_manager_name.help_text }}</div>{% endif %}
                     {% for error in rental_form.project_manager_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div> {% endcomment %}
+                <div class="col-md-6 mb-3">
+                    <label for="{{ rental_form.project_manager.id_for_label }}" class="form-label">{{ rental_form.project_manager.label }}</label>
+                    {{ rental_form.project_manager }}
+                    {% if rental_form.project_manager.help_text %}
+                        <div class="form-text">{{ rental_form.project_manager.help_text|safe }}</div>
+                    {% endif %}
+                    {% for error in rental_form.project_manager.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div class="col-md-6">
                     <label for="{{ rental_form.subcontractor_name.id_for_label }}" class="form-label">{{ rental_form.subcontractor_name.label }}</label>

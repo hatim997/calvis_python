@@ -1,5 +1,3 @@
-# clavis_event_inventory/request_quote/utils.py
-
 import io
 from django.http import HttpResponse
 from django.utils import timezone
@@ -17,13 +15,6 @@ from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER, TA_JUSTIFY
 # Import models
 from .models import QuoteRequest, QuoteRequestItem
 from inventory.models import Item
-
-# --- COMPANY DETAILS ---
-COMPANY_NAME_FOR_PDF = "Clavis Events & Promotions W.L.L"
-COMPANY_ADDRESS_PDF_LINE1 = "Office 123, Building 456, Road 789"
-COMPANY_ADDRESS_PDF_LINE2 = "Manama, Kingdom of Bahrain"
-COMPANY_CONTACT_DETAILS_PDF = "Tel: +973 1700 0000 | Email: info@clavisevents.com"
-COMPANY_REGISTRATION_PDF = "CR: XXXXXX-X | VAT: XXXXXXXXXXXXXXX"
 
 # --- PDF STYLES ---
 def get_pdf_styles():
@@ -180,36 +171,26 @@ def build_items_table_letterhead(story, styles, quote_items_qs):
 
     story.append(table)
 
-
-
 def draw_signature_footer(canvas, doc):
     canvas.saveState()
     width, height = letter
 
     # Set margins
     left_margin = doc.leftMargin
-    right_margin = doc.rightMargin
-    usable_width = width - left_margin - right_margin
+    usable_width = width - left_margin - doc.rightMargin
 
-    # Calculate space for 2 equal sections with padding
-    col_width = usable_width / 2
-    padding = 15  # Extra padding between columns
-
-    x1 = left_margin
-    x2 = x1 + col_width + padding
+    x = left_margin
     y = 0.5 * inch
 
     canvas.setFont("Helvetica-Bold", 7)
-    canvas.drawString(x1, y + 30, "Prepared By (Clavis Representative):")
-    canvas.drawString(x2, y + 30, "Approved By (Client/Representative):")
+    canvas.drawString(x, y + 30, "Project Manager:")
 
     canvas.setFont("Helvetica", 7)
-    canvas.drawString(x1, y + 15, "Name & Signature: ________________________")
-    canvas.drawString(x2, y + 15, "Name & Signature: ________________________")
-    canvas.drawString(x1, y, "Date: _______________   Time: __________")
-    canvas.drawString(x2, y, "Date: _______________   Time: __________")
+    canvas.drawString(x, y + 15, "Name & Signature: ________________________")
+    canvas.drawString(x, y, "Date: _______________   Time: __________")
 
     canvas.restoreState()
+
 
 # In request_quote/utils.py, within generate_quote_pdf
 def generate_quote_pdf(quote):
@@ -238,17 +219,14 @@ def generate_quote_pdf(quote):
     # Build header
     build_pdf_header_letterhead(
         story, styles, logo_el, "QUOTE REQUEST",
-        quote.reference_number, COMPANY_NAME_FOR_PDF,
-        COMPANY_ADDRESS_PDF_LINE1, COMPANY_ADDRESS_PDF_LINE2,
-        COMPANY_CONTACT_DETAILS_PDF + " | " + COMPANY_REGISTRATION_PDF,
-        show_company_info=True
+        quote.reference_number, "", "", "", "",
+        show_company_info=False
     )
 
     # Addressee and date section
-    quote_date_str = quote.date_created.strftime('%d %B %Y') if quote.date_created else "N/A"  # Fixed: Removed timezone.localtime
+    quote_date_str = quote.date_created.strftime('%d %B %Y') if quote.date_created else "N/A"
     build_addressee_date_section_letterhead(story, styles, quote, "Quote Date:", quote_date_str)
 
-    # ... (rest of the function remains unchanged) ...
     # Items table
     quote_items_qs = quote.items.all().select_related('item', 'item__category')
     build_items_table_letterhead(story, styles, quote_items_qs)
@@ -259,11 +237,6 @@ def generate_quote_pdf(quote):
         story.append(Paragraph("Additional Notes", styles['SectionTitle']))
         story.append(Paragraph(quote.project_manager_notes.replace('\n', '<br/>'), styles['ItemsTableCellText']))
         story.append(Spacer(1, 0.15*inch))
-
-    # Disclaimer
-    disclaimer_text = "<b>Terms:</b> This quotation is valid for 30 days from the date of issue. All items are subject to availability at the time of confirmation. Please confirm acceptance in writing."
-    story.append(Paragraph(disclaimer_text, styles['DisclaimerText']))
-    story.append(Spacer(1, 0.25*inch))
 
     # Build PDF with signature footer
     doc.build(story, onFirstPage=draw_signature_footer, onLaterPages=draw_signature_footer)

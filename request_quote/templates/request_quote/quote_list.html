@@ -6,7 +6,7 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>{{ page_title }}</h1>
-    <a href="{% url 'request_quote:quote_add' %}" class="btn btn-primary">+ Add New Quote</a>
+    <a href="{% url 'request_quote:quote_add' %}" class="btn btn-primary">+ Add New Request</a>
 </div>
 
 {% if quotes %}
@@ -16,6 +16,7 @@
                 <tr>
                     <th>Reference #</th>
                     <th>Client</th>
+                    <th>Project Manager</th>
                     <th>Event Title</th>
                     <th>Start Date</th>
                     <th>End Date</th>
@@ -33,6 +34,7 @@
                         <a href="{% url 'clients:client_detail' client_id=quote.client.id %}">{{ quote.client }}</a>
                         {% else %} N/A {% endif %}
                     </td>
+                    <td>{{ quote.project_manager.get_full_name|default:"N/A" }}</td>
                     <td>{{ quote.event_title }}</td>
                     <td>{{ quote.event_start_date|date:"j M Y" }}</td>
                     <td>{{ quote.event_end_date|date:"j M Y" }}</td>

@@ -2,8 +2,10 @@
 
 from django import forms
 from django.utils import timezone # To get the current year/month
+from django.contrib.auth import get_user_model
 import datetime # To work with dates if needed for validation
 
+User = get_user_model()  # ✅ Get the User model
 class MonthlyReportFilterForm(forms.Form):
     """
     Form for selecting the year and month for the monthly summary report.
@@ -35,6 +37,14 @@ class MonthlyReportFilterForm(forms.Form):
         initial=timezone.now().month, # Default to the current month
         widget=forms.Select(attrs={'class': 'form-select'}) # Apply Bootstrap class
     )
+    
+    # ✅ Add this field
+    project_manager = forms.ModelChoiceField(
+        queryset=User.objects.all().order_by('first_name'),
+        required=False,
+        label="Project Manager",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
 
     def clean_year(self):
         """
@@ -62,3 +72,14 @@ class MonthlyReportFilterForm(forms.Form):
             return int(month)
         except (ValueError, TypeError):
             raise forms.ValidationError("Invalid month selected.")
+        
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        # If user is superuser, show all PMs
+        if user and user.is_superuser:
+            self.fields['project_manager'].queryset = User.objects.filter(groups__name='Project Managers')
+        else:
+            # Not a superuser — hide the project_manager field
+            self.fields.pop('project_manager', None)

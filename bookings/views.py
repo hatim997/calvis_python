@@ -42,6 +42,15 @@ def event_add_view(request):
 
         if event_form.is_valid():
             event_instance = event_form.save(commit=False)
+            # Assign project_manager_id
+            project_manager = event_form.cleaned_data.get('project_manager')
+            event_instance.project_manager = project_manager  # sets project_manager_id
+
+            # Assign project_manager_name as "First Last"
+            if project_manager:
+                event_instance.project_manager_name = f"{project_manager.first_name} {project_manager.last_name}"
+            else:
+                event_instance.project_manager_name = ""
             is_logistics_service = event_form.cleaned_data.get('is_logistics_only_service', False)
             event_instance.is_logistics_only_service = is_logistics_service # Ensure it's set on the instance
 
@@ -122,6 +131,13 @@ def event_edit_view(request, event_id):
 
         if event_form.is_valid():
             event_instance = event_form.save(commit=False) # Don't save yet, need to check is_logistics_only_service
+            # Update project manager fields
+            project_manager = event_form.cleaned_data.get('project_manager')
+            event_instance.project_manager = project_manager
+            if project_manager:
+                event_instance.project_manager_name = f"{project_manager.first_name} {project_manager.last_name}"
+            else:
+                event_instance.project_manager_name = ""
             is_logistics_service = event_form.cleaned_data.get('is_logistics_only_service', False)
             event_instance.is_logistics_only_service = is_logistics_service # Update the instance
 
@@ -224,7 +240,19 @@ def rental_add_view(request):
             if all_items_available:
                 try:
                     rental = rental_form.save(commit=False)
-                    rental.status = Rental.StatusChoices.BOOKED 
+
+                    # Set status
+                    rental.status = Rental.StatusChoices.BOOKED
+
+                    # Set project_manager and project_manager_name
+                    project_manager = rental_form.cleaned_data.get('project_manager')
+                    rental.project_manager = project_manager
+                    if project_manager:
+                        rental.project_manager_name = f"{project_manager.first_name} {project_manager.last_name}"
+                    else:
+                        rental.project_manager_name = ""
+
+                    # Save the rental
                     rental.save()
                     item_formset.instance = rental
                     item_formset.save()
@@ -278,7 +306,16 @@ def rental_edit_view(request, rental_id):
             
             if all_items_available:
                 try:
-                    rental_form.save()
+                    rental_instance = rental_form.save(commit=False)
+                    project_manager = rental_form.cleaned_data.get('project_manager')
+
+                    rental_instance.project_manager = project_manager
+                    if project_manager:
+                        rental_instance.project_manager_name = f"{project_manager.first_name} {project_manager.last_name}"
+                    else:
+                        rental_instance.project_manager_name = ""
+
+                    rental_instance.save()
                     item_formset.save()
                     messages.success(request, f"Rental Booking '{rental.reference_number}' updated successfully!")
                     return redirect(rental.get_absolute_url()) # Use get_absolute_url

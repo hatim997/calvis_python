@@ -13,59 +13,6 @@ from .utils import generate_barcode_base64 #barcode imported
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 # --- Item List/Detail Views ---
-# def item_list_view(request):
-#     search_query = request.GET.get('q', '')
-#     selected_category_id = request.GET.get('category', '')
-#     selected_item_source = request.GET.get('item_source', '')
-
-#     queryset = Item.objects.all().select_related('category', 'supplier')
-
-#     if selected_category_id:
-#         try:
-#             category_id_int = int(selected_category_id)
-#             queryset = queryset.filter(category_id=category_id_int)
-#         except (ValueError, TypeError):
-#             selected_category_id = '' 
-    
-#     if selected_item_source:
-#         queryset = queryset.filter(item_source=selected_item_source)
-
-#     if search_query:
-#         queryset = queryset.filter(
-#             Q(name__icontains=search_query) | 
-#             Q(sku__icontains=search_query) | 
-#             Q(description__icontains=search_query) | 
-#             Q(category__name__icontains=search_query)
-#         ).distinct()
-    
-#     categories = Category.objects.all().order_by('name')
-#     # items = queryset.order_by('category__name', 'name') # This will be done in template if needed or after pagination
-
-#     items = queryset.order_by('category__name', 'name')
-#     # Inject barcode image into each item
-#     for item in items:
-#         item.barcode_image = generate_barcode_base64(item.sku)
-        
-#     context = {
-#         'items': items,
-#         'categories': categories,
-#         'selected_category_id': selected_category_id,
-#         'search_query': search_query,
-#         'page_title': 'Inventory Items',
-#         'item_source_choices': Item.ItemSourceType.choices,
-#         'selected_item_source': selected_item_source,
-#     }
-
-#     # context = { 
-#     #     'items': queryset.order_by('category__name', 'name'), # Apply ordering here
-#     #     'categories': categories, 
-#     #     'selected_category_id': selected_category_id, 
-#     #     'search_query': search_query, 
-#     #     'page_title': 'Inventory Items',
-#     #     'item_source_choices': Item.ItemSourceType.choices, 
-#     #     'selected_item_source': selected_item_source,     
-#     # }
-#     return render(request, 'inventory/item_list.html', context)
 def item_list_view(request):
     search_query = request.GET.get('q', '')
     selected_category_id = request.GET.get('category', '')
@@ -236,9 +183,12 @@ def delete_item_image(request, image_id):
 # --- Report Views ---
 def master_inventory_report(request):
     format_param = request.GET.get('format') 
+    pdf_type = request.GET.get('type')  # 'client' or 'complete'
     items = Item.objects.all().select_related('category', 'supplier').order_by('category', 'name')
     if format_param == 'xlsx': return generate_master_inventory_excel(items)
-    elif format_param == 'pdf': return generate_master_inventory_pdf(items)
+    elif format_param == 'pdf':
+        client_view = (pdf_type == 'client')
+        return generate_master_inventory_pdf(items, client_view=client_view)
     elif format_param == 'docx': return generate_master_inventory_docx(items)
     else:
         context = { 'items': items, 'page_title': 'Master Inventory Report', }

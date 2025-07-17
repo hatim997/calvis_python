@@ -9,7 +9,9 @@
      <div class="report-actions">
         <span class="me-2">Download Report:</span>
         <a href="?format=xlsx" class="btn btn-success btn-sm">Excel (.xlsx)</a>
-        <a href="?format=pdf" class="btn btn-danger btn-sm ms-2">PDF (.pdf)</a>
+        {% comment %} <a href="?format=pdf" class="btn btn-danger btn-sm ms-2">PDF (.pdf)</a> {% endcomment %}
+        <a href="?format=pdf&type=complete" class="btn btn-danger btn-sm ms-2">Complete PDF (.pdf)</a>
+        <a href="?format=pdf&type=client" class="btn btn-warning btn-sm ms-2">Client PDF (.pdf)</a>
         <a href="?format=docx" class="btn btn-primary btn-sm ms-2">Word (.docx)</a>
     </div>
 </div>

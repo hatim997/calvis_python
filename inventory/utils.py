@@ -107,86 +107,184 @@ def generate_master_inventory_excel(items):
     return response
 
 
-def generate_master_inventory_pdf(items):
-    """Generates a PDF HttpResponse for the master inventory list with images."""
+# def generate_master_inventory_pdf(items):
+#     """Generates a PDF HttpResponse for the master inventory list with images."""
+#     buffer = io.BytesIO()
+#     # Consider portrait if too many columns make landscape too cramped with images
+#     doc = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=0.5*inch, leftMargin=0.5*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
+#     styles = getSampleStyleSheet()
+#     story = []
+
+#     # Define a paragraph style for table cells for better text wrapping
+#     table_cell_style = ParagraphStyle('TableCell', parent=styles['Normal'], fontSize=7, leading=8)
+
+
+#     title = f"Clavis Master Inventory Report - {date.today()}"
+#     story.append(Paragraph(title, styles['h1']))
+#     story.append(Spacer(1, 0.2*inch))
+
+#     # ADDED "Image" to headers
+#     headers = ["Image", "SKU", "Item Name", "Category", "Loc", "Init", "Avail", "Purch", "Rent", "D", "W", "H", "Unit", "Supplier"]
+#     data = [headers]
+
+#     for item in items:
+#         purch_price = f"{item.purchase_price} BHD" if item.purchase_price is not None else '-'
+#         rent_price = f"{item.rent_price_per_day} BHD" if item.rent_price_per_day is not None else '-'
+        
+#         # --- Image Handling ---
+#         item_image_el = Paragraph("(No Image)", table_cell_style) # Placeholder
+#         if item.image1 and hasattr(item.image1, 'path'):
+#             try:
+#                 if os.path.exists(item.image1.path):
+#                     with PILImage.open(item.image1.path) as pil_img:
+#                         pil_img = ImageOps.exif_transpose(pil_img)  # Auto-rotate if needed
+#                         pil_img = pil_img.convert("RGB")  # Ensure compatible mode for PDF
+
+#                         img_buffer = io.BytesIO()
+#                         pil_img.save(img_buffer, format='JPEG')
+#                         img_buffer.seek(0)
+
+#                         img = Image(img_buffer, width=0.5*inch, height=0.5*inch)
+#                         img.hAlign = 'CENTER'
+#                         item_image_el = img
+#             except Exception as e:
+#                 print(f"Error loading image {item.image1.path} for PDF: {e}")
+#         # --- End Image Handling ---
+
+#         data.append([
+#             item_image_el, # ADDED Image element or placeholder
+#             Paragraph(item.sku or '-', table_cell_style), 
+#             Paragraph(item.name or '-', table_cell_style), 
+#             Paragraph(item.category.name if item.category else '-', table_cell_style),
+#             Paragraph(item.storage_location or '-', table_cell_style), 
+#             item.initial_quantity, 
+#             item.available_quantity,
+#             Paragraph(purch_price, table_cell_style), 
+#             Paragraph(rent_price, table_cell_style),
+#             item.depth or '-', 
+#             item.width or '-', 
+#             item.height or '-',
+#             Paragraph(item.get_dimension_unit_display(), table_cell_style), 
+#             Paragraph(item.supplier.name if item.supplier else '-', table_cell_style),
+#         ])
+
+#     # ADDED width for Image column, adjusted others
+#     col_widths = [0.7*inch, 0.7*inch, 1.2*inch, 0.7*inch, 0.7*inch, 0.4*inch, 0.4*inch, 0.7*inch, 0.7*inch, 0.4*inch, 0.4*inch, 0.4*inch, 0.4*inch, 0.8*inch ]
+
+#     if len(data) > 1 :
+#         table = Table(data, colWidths=col_widths, rowHeights=0.6*inch) # Set a default row height for images
+#         table.setStyle(TableStyle([
+#             ('BACKGROUND', (0, 0), (-1, 0), colors.grey), 
+#             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+#             ('ALIGN', (0, 0), (-1, -1), 'CENTER'), 
+#             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'), # Vertically align content in cells
+#             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+#             ('BOTTOMPADDING', (0, 0), (-1, 0), 8), 
+#             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+#             ('GRID', (0, 0), (-1, -1), 1, colors.black), 
+#             ('FONTSIZE', (0, 0), (-1, -1), 7), # Keep font small for data
+#             ('ALIGN', (1, 1), (2, -1), 'LEFT'), # Align SKU, Item Name left
+#             ('ALIGN', (3, 1), (4, -1), 'LEFT'), # Align Category, Loc left
+#             ('ALIGN', (7, 1), (8, -1), 'RIGHT'), # Align prices right
+#             ('ALIGN', (13, 1), (13, -1), 'LEFT'), # Align Supplier left
+#         ]))
+#         story.append(table)
+#     else:
+#         story.append(Paragraph("No inventory items found.", styles['Normal']))
+
+#     doc.build(story)
+#     buffer.seek(0)
+#     response = HttpResponse(buffer, content_type='application/pdf')
+#     response['Content-Disposition'] = f'attachment; filename="clavis_master_inventory_{date.today()}.pdf"'
+#     return response
+
+def generate_master_inventory_pdf(items, client_view=False):
     buffer = io.BytesIO()
-    # Consider portrait if too many columns make landscape too cramped with images
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=0.5*inch, leftMargin=0.5*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    doc = SimpleDocTemplate(
+        buffer, pagesize=landscape(letter),
+        rightMargin=0.5*inch, leftMargin=0.5*inch,
+        topMargin=0.5*inch, bottomMargin=0.5*inch
+    )
     styles = getSampleStyleSheet()
     story = []
-
-    # Define a paragraph style for table cells for better text wrapping
     table_cell_style = ParagraphStyle('TableCell', parent=styles['Normal'], fontSize=7, leading=8)
-
 
     title = f"Clavis Master Inventory Report - {date.today()}"
     story.append(Paragraph(title, styles['h1']))
     story.append(Spacer(1, 0.2*inch))
 
-    # ADDED "Image" to headers
-    headers = ["Image", "SKU", "Item Name", "Category", "Loc", "Init", "Avail", "Purch", "Rent", "D", "W", "H", "Unit", "Supplier"]
+    headers = ["Image", "SKU", "Item Name", "Category", "Loc", "Init", "Avail"]
+    if not client_view:
+        headers += ["Purch"]
+    headers += ["Rent", "D", "W", "H", "Unit", "Supplier"]
     data = [headers]
 
     for item in items:
         purch_price = f"{item.purchase_price} BHD" if item.purchase_price is not None else '-'
         rent_price = f"{item.rent_price_per_day} BHD" if item.rent_price_per_day is not None else '-'
-        
-        # --- Image Handling ---
-        item_image_el = Paragraph("(No Image)", table_cell_style) # Placeholder
+
+        item_image_el = Paragraph("(No Image)", table_cell_style)
         if item.image1 and hasattr(item.image1, 'path'):
             try:
                 if os.path.exists(item.image1.path):
                     with PILImage.open(item.image1.path) as pil_img:
-                        pil_img = ImageOps.exif_transpose(pil_img)  # Auto-rotate if needed
-                        pil_img = pil_img.convert("RGB")  # Ensure compatible mode for PDF
-
+                        pil_img = ImageOps.exif_transpose(pil_img).convert("RGB")
                         img_buffer = io.BytesIO()
                         pil_img.save(img_buffer, format='JPEG')
                         img_buffer.seek(0)
-
                         img = Image(img_buffer, width=0.5*inch, height=0.5*inch)
                         img.hAlign = 'CENTER'
                         item_image_el = img
             except Exception as e:
                 print(f"Error loading image {item.image1.path} for PDF: {e}")
-        # --- End Image Handling ---
 
-        data.append([
-            item_image_el, # ADDED Image element or placeholder
-            Paragraph(item.sku or '-', table_cell_style), 
-            Paragraph(item.name or '-', table_cell_style), 
+        row = [
+            item_image_el,
+            Paragraph(item.sku or '-', table_cell_style),
+            Paragraph(item.name or '-', table_cell_style),
             Paragraph(item.category.name if item.category else '-', table_cell_style),
-            Paragraph(item.storage_location or '-', table_cell_style), 
-            item.initial_quantity, 
-            item.available_quantity,
-            Paragraph(purch_price, table_cell_style), 
+            Paragraph(item.storage_location or '-', table_cell_style),
+            item.initial_quantity,
+            item.available_quantity
+        ]
+        if not client_view:
+            row += [
+                Paragraph(purch_price, table_cell_style)
+            ]
+        row += [
+            
             Paragraph(rent_price, table_cell_style),
-            item.depth or '-', 
-            item.width or '-', 
-            item.height or '-',
-            Paragraph(item.get_dimension_unit_display(), table_cell_style), 
-            Paragraph(item.supplier.name if item.supplier else '-', table_cell_style),
-        ])
+            item.depth or '-', item.width or '-', item.height or '-',
+            Paragraph(item.get_dimension_unit_display(), table_cell_style),
+            Paragraph(item.supplier.name if item.supplier else '-', table_cell_style)
+        ]
 
-    # ADDED width for Image column, adjusted others
-    col_widths = [0.7*inch, 0.7*inch, 1.2*inch, 0.7*inch, 0.7*inch, 0.4*inch, 0.4*inch, 0.7*inch, 0.7*inch, 0.4*inch, 0.4*inch, 0.4*inch, 0.4*inch, 0.8*inch ]
+        data.append(row)
 
-    if len(data) > 1 :
-        table = Table(data, colWidths=col_widths, rowHeights=0.6*inch) # Set a default row height for images
+    # Adjust column widths
+    col_widths = [
+        0.7*inch, 0.7*inch, 1.2*inch, 0.7*inch, 0.7*inch, 0.4*inch, 0.4*inch
+    ]
+    if not client_view:
+        col_widths += [0.7*inch]
+    col_widths += [ 0.7*inch, 0.4*inch, 0.4*inch, 0.4*inch, 0.4*inch, 0.8*inch]
+
+    if len(data) > 1:
+        table = Table(data, colWidths=col_widths, rowHeights=0.6*inch)
         table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey), 
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'), 
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'), # Vertically align content in cells
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8), 
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black), 
-            ('FONTSIZE', (0, 0), (-1, -1), 7), # Keep font small for data
-            ('ALIGN', (1, 1), (2, -1), 'LEFT'), # Align SKU, Item Name left
-            ('ALIGN', (3, 1), (4, -1), 'LEFT'), # Align Category, Loc left
-            ('ALIGN', (7, 1), (8, -1), 'RIGHT'), # Align prices right
-            ('ALIGN', (13, 1), (13, -1), 'LEFT'), # Align Supplier left
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
+            ('ALIGN', (1, 1), (2, -1), 'LEFT'),
+            ('ALIGN', (3, 1), (4, -1), 'LEFT'),
+            ('ALIGN', (7, 1), (8, -1), 'RIGHT') if not client_view else ('ALIGN', (6, 1), (6, -1), 'RIGHT'),
+            ('ALIGN', (-1, 1), (-1, -1), 'LEFT'),
         ]))
         story.append(table)
     else:
@@ -195,8 +293,10 @@ def generate_master_inventory_pdf(items):
     doc.build(story)
     buffer.seek(0)
     response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="clavis_master_inventory_{date.today()}.pdf"'
+    filename = f"clavis_master_inventory_{'client' if client_view else 'full'}_{date.today()}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
 
 
 def generate_master_inventory_docx(items):

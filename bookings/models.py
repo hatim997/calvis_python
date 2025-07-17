@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone # For default dates or reference numbers
 import uuid # For generating unique reference numbers
 from django.urls import reverse 
+from django.contrib.auth.models import User
 
 # Import related models from other apps using string paths to avoid circular imports
 # from clients.models import Client (use 'clients.Client' instead)
@@ -26,6 +27,14 @@ class BaseBooking(models.Model):
         on_delete=models.PROTECT, 
         related_name='%(class)ss', 
         help_text="The client associated with this booking."
+    )
+    project_manager = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL, 
+        null=True,
+        blank=True,
+        related_name='%(class)ss_as_manager', 
+        help_text="User assigned as Project Manager."
     )
     start_date = models.DateTimeField(
         help_text="The date and time the event/rental period begins."

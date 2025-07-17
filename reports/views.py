@@ -24,7 +24,9 @@ def monthly_summary_report_view(request):
     Displays a monthly summary report of events, logistics services, rentals, clients, and item usage.
     Handles export requests.
     """
-    form = MonthlyReportFilterForm(request.GET or None)
+    # form = MonthlyReportFilterForm(request.GET or None)
+    user = request.user
+    form = MonthlyReportFilterForm(request.GET or None, user=user)
 
     # Default empty values
     regular_events_in_month = Event.objects.none()
@@ -35,11 +37,17 @@ def monthly_summary_report_view(request):
 
     selected_year = None
     selected_month = None
+    selected_pm = None
     month_year_str = "Not Selected"
 
     if form.is_valid():
         selected_year = form.cleaned_data.get('year', "all")
         selected_month = form.cleaned_data.get('month', "all")
+        if 'project_manager' in form.fields:
+            selected_pm = form.cleaned_data.get('project_manager')
+        else:
+            # If user is not superuser, default to their own events
+            selected_pm = user
         month_year_str = get_month_year_str(selected_year, selected_month)
 
         # 1. Regular Events
@@ -48,6 +56,8 @@ def monthly_summary_report_view(request):
             regular_events_in_month = regular_events_in_month.filter(start_date__year=selected_year)
         if selected_month != "all":
             regular_events_in_month = regular_events_in_month.filter(start_date__month=selected_month)
+        if selected_pm:
+            regular_events_in_month = regular_events_in_month.filter(project_manager=selected_pm)
 
         # 2. Logistics Services
         logistics_services_in_month = Event.objects.filter(is_logistics_only_service=True)
@@ -55,6 +65,8 @@ def monthly_summary_report_view(request):
             logistics_services_in_month = logistics_services_in_month.filter(start_date__year=selected_year)
         if selected_month != "all":
             logistics_services_in_month = logistics_services_in_month.filter(start_date__month=selected_month)
+        if selected_pm:
+            logistics_services_in_month = logistics_services_in_month.filter(project_manager=selected_pm)
 
         # 3. Rentals
         rentals_in_month = Rental.objects.all()
@@ -62,6 +74,8 @@ def monthly_summary_report_view(request):
             rentals_in_month = rentals_in_month.filter(start_date__year=selected_year)
         if selected_month != "all":
             rentals_in_month = rentals_in_month.filter(start_date__month=selected_month)
+        if selected_pm:
+            rentals_in_month = rentals_in_month.filter(project_manager=selected_pm)
 
         # 4. Clients Summary
         new_clients_in_month = Client.objects.all()

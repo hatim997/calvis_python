@@ -68,7 +68,7 @@ def quote_add_view(request):
     return render(request, 'request_quote/quote_form.html', {
         'quote_form': form,
         'item_formset': formset,
-        'page_title': 'Create Quote Request',
+        'page_title': 'Create Request Form',
         'is_superuser': request.user.is_superuser,  # <-- send flag to template
     })
 
@@ -111,7 +111,7 @@ def quote_edit_view(request, quote_id):
         'quote_form': form,
         'item_formset': formset,
         'quote_request': quote,
-        'page_title': f"Edit Quote Request: {quote.event_title}",
+        'page_title': f"Edit Request Form: {quote.event_title}",
         'is_superuser': request.user.is_superuser,
     })
     

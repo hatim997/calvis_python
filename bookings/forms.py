@@ -7,6 +7,7 @@ from django.forms import inlineformset_factory, BooleanField # Import BooleanFie
 from .models import Event, EventItem, Rental, RentalItem
 from inventory.models import Item # This should still refer to the Item model with initial_quantity
 from clients.models import Client
+from django.contrib.auth.models import User
 
 # --- Event Forms ---
 
@@ -34,6 +35,11 @@ class EventForm(forms.ModelForm):
         label="Project Manager",
         required=False, 
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Name of Project Manager'})
+    )
+    project_manager = forms.ModelChoiceField(
+        queryset=User.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Project Manager"
     )
     subcontractor_name = forms.CharField(
         label="Subcontractor",
@@ -100,6 +106,7 @@ class EventForm(forms.ModelForm):
             'client', 
             'event_name', 
             'event_location', 
+            'project_manager', 
             'start_date', 'end_date', 
             'project_manager_name', 'subcontractor_name', 
             'status', 
@@ -170,6 +177,11 @@ class RentalForm(forms.ModelForm):
         required=False, 
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Name of Project Manager'})
     )
+    project_manager = forms.ModelChoiceField(
+        queryset=User.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Project Manager"
+    )
     subcontractor_name = forms.CharField(
         label="Subcontractor",
         required=False, 
@@ -184,7 +196,7 @@ class RentalForm(forms.ModelForm):
     class Meta:
         model = Rental
         fields = [
-            'client', 'start_date', 'end_date', 
+            'client', 'start_date', 'end_date', 'project_manager', 
             'project_manager_name', 'subcontractor_name', 
             'delivery_location', 
             'notes', 'status'
